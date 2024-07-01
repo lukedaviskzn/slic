@@ -490,7 +490,8 @@ function draw(time) {
 
     // let boardZRot = -0.1;
     let boardZRot = rot;
-    let boardRot = rotZ(boardZRot);
+    // let boardRot = rotZ(boardZRot);
+    let boardRot = IDENTITY;
 
     let board = matMul(translate(0, 0, -1.5), boardRot);
 
