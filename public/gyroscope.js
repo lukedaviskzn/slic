@@ -1,4 +1,6 @@
 var outputText;
+var phonePanel;
+var arrow;
 
 window.addEventListener('load', function () {
     outputText = this.document.getElementById("output");

@@ -5,6 +5,6 @@ const port = 3030;
 
 app.use(express.static('public'));
 
-app.listen(port, '0.0.0.0', () => {
+app.listen(port, () => {
     console.log(`Listening on port ${port}`);
 });
