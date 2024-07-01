@@ -426,15 +426,15 @@ function main() {
             let gz = a.z - b.z;
 
             statusElem.innerText = JSON.stringify({
-                gx,
-                gy,
-                gz,
-                ax: a.x,
-                ay: a.y,
-                az: a.z,
-                bx: b.x,
-                by: b.y,
-                bz: b.z,
+                gx: Math.round(gx, 2),
+                gy: Math.round(gy, 2),
+                gz: Math.round(gz, 2),
+                ax: Math.round(a.x, 2),
+                ay: Math.round(a.y, 2),
+                az: Math.round(a.z, 2),
+                bx: Math.round(b.x, 2),
+                by: Math.round(b.y, 2),
+                bz: Math.round(b.z, 2),
             });
         }, false);
     } else {
