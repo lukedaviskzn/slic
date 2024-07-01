@@ -423,19 +423,8 @@ function main() {
 
             let gx = a.x - b.x;
             let gy = a.y - b.y;
-            let gz = a.z - b.z;
 
-            statusElem.innerText = JSON.stringify({
-                gx: Math.round(gx, 2),
-                gy: Math.round(gy, 2),
-                gz: Math.round(gz, 2),
-                ax: Math.round(a.x, 2),
-                ay: Math.round(a.y, 2),
-                az: Math.round(a.z, 2),
-                bx: Math.round(b.x, 2),
-                by: Math.round(b.y, 2),
-                bz: Math.round(b.z, 2),
-            });
+            statusElem.innerText = (Math.round(Math.atan2(gy, gx)*100.0)/100.0) + "";
         }, false);
     } else {
         throw "Doesn't support device orientation.";
