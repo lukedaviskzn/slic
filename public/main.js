@@ -425,6 +425,8 @@ function main() {
             let gy = a.y - b.y;
 
             statusElem.innerText = (Math.round(Math.atan2(gy, gx)*100.0)/100.0) + "";
+
+            rot = Math.atan2(gy, gx);
         }, false);
     } else {
         throw "Doesn't support device orientation.";
@@ -487,7 +489,7 @@ function draw(time) {
     gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
 
     // let boardZRot = -0.1;
-    let boardZRot = rot * Math.PI / 180.0;
+    let boardZRot = rot;
     let boardRot = rotZ(boardZRot);
 
     let board = matMul(translate(0, 0, -1.5), boardRot);
