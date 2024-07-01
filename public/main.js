@@ -378,6 +378,8 @@ function compileProgram(gl) {
     }
 }
 
+let rot = 0;
+
 function main() {
     canvas = /**@type {HTMLCanvasElement | null}*/(document.getElementById("canvas"));
     gl = canvas?.getContext("webgl");
@@ -411,6 +413,7 @@ function main() {
         window.addEventListener('deviceorientationabsolute', (event) => {
             if (!event.alpha || !event.beta || !event.gamma || !statusElem) return;
             statusElem.innerText = "Alpha: " + Math.round(event.alpha * 100.0)/100.0 + ", Beta: " + Math.round(event.beta * 100.0)/100.0 + ", Gamma: " + Math.round(event.gamma * 100.0)/100.0;
+            rot = event.gamma;
         }, false);
     } else {
         throw "Doesn't support device orientation.";
@@ -472,7 +475,8 @@ function draw(time) {
     gl.clearColor(30/255, 21/255, 42/255, 1.0);
     gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
 
-    let boardZRot = -0.1;
+    // let boardZRot = -0.1;
+    let boardZRot = rot * Math.PI / 180.0;
     let boardRot = rotZ(boardZRot);
 
     let board = matMul(translate(0, 0, -1.5), boardRot);
