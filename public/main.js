@@ -413,7 +413,7 @@ function main() {
         window.addEventListener('deviceorientationabsolute', (event) => {
             if (!event.alpha || !event.beta || !event.gamma || !statusElem) return;
             statusElem.innerText = "Alpha: " + Math.round(event.alpha * 100.0)/100.0 + ", Beta: " + Math.round(event.beta * 100.0)/100.0 + ", Gamma: " + Math.round(event.gamma * 100.0)/100.0;
-            rot = event.gamma;
+            rot = event.beta;
         }, false);
     } else {
         throw "Doesn't support device orientation.";
