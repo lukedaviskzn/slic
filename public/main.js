@@ -426,7 +426,7 @@ function main() {
 
             statusElem.innerText = (Math.round(Math.atan2(gy, gx)*100.0)/100.0) + "";
 
-            rot = Math.atan2(gy, gx) / 2.0;
+            rot = rot/2 + (Math.atan2(gy, gx)/2);
         }, false);
     } else {
         throw "Doesn't support device orientation.";
