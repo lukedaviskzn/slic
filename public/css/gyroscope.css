@@ -1,0 +1,15 @@
+#panel{
+    width: 300px;
+    height: 200px;
+    background-color: red;
+    
+}
+
+#xrot {
+    width: min-content;
+    background-color: blue;
+}
+#yrot {
+    width: min-content;
+    background-color: green;
+}
