@@ -412,8 +412,30 @@ function main() {
         // }, false);
         window.addEventListener('deviceorientationabsolute', (event) => {
             if (!event.alpha || !event.beta || !event.gamma || !statusElem) return;
-            statusElem.innerText = "Alpha: " + Math.round(event.alpha * 100.0)/100.0 + ", Beta: " + Math.round(event.beta * 100.0)/100.0 + ", Gamma: " + Math.round(event.gamma * 100.0)/100.0;
+            // statusElem.innerText = "Alpha: " + Math.round(event.alpha * 100.0)/100.0 + ", Beta: " + Math.round(event.beta * 100.0)/100.0 + ", Gamma: " + Math.round(event.gamma * 100.0)/100.0;
             rot = event.beta;
+        }, false);
+        window.addEventListener('devicemotion', (event) => {
+            let a = event.accelerationIncludingGravity
+            let b = event.acceleration;
+
+            if (!a?.x || !b?.x || !a?.y || !b?.y || !a?.z || !b?.z || !statusElem) return;
+
+            let gx = a.x - b.x;
+            let gy = a.y - b.y;
+            let gz = a.z - b.z;
+
+            statusElem.innerText = JSON.stringify({
+                gx,
+                gy,
+                gz,
+                ax: a.x,
+                ay: a.y,
+                az: a.z,
+                bx: b.x,
+                by: b.y,
+                bz: b.z,
+            });
         }, false);
     } else {
         throw "Doesn't support device orientation.";
