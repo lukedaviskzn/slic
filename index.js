@@ -8,7 +8,7 @@ app.use(express.static('public'));
 const defaultBoardSize = 10;
 
 /**
- * @type {Object.<string, {id: string, status: 'waiting' | 'playing', gravityAngle: number. boardSize: number, walls: [{t: boolean, l: boolean}], players: [{gravityAngle: number, x: number, y: number, vx: number, vy: number}]}>}
+ * @type {Object.<string, {id: string, status: 'waiting' | 'playing', gravityAngle: number, winner: number. boardSize: number, walls: [{t: boolean, l: boolean}], players: [{gravityAngle: number, x: number, y: number, vx: number, vy: number}]}>}
  */
 let lobbies = {};
 
@@ -24,6 +24,7 @@ app.get("/lobby/create", (req, res) => {
         id,
         status: 'waiting',
         gravityAngle: 0,
+        winner: -1,
         boardSize: defaultBoardSize,
         walls: [],
         players: [],
@@ -105,6 +106,7 @@ app.get("/lobby/poll", (req, res) => {
     let by = playerId !== null ? parseFloat(req.query.by) : 0.0;
     let vx = playerId !== null ? parseFloat(req.query.vx) : 0.0;
     let vy = playerId !== null ? parseFloat(req.query.vy) : 0.0;
+    let win = req.query.vy !== undefined;
     
     let lobby = lobbies[lobbyId];
     
@@ -119,6 +121,10 @@ app.get("/lobby/poll", (req, res) => {
         lobby.players[playerId].y = by;
         lobby.players[playerId].vx = vx;
         lobby.players[playerId].vy = vy;
+
+        if (win && lobby.winner == -1) {
+            lobby.winner = playerId;
+        }
     
         let averageGravity = 0.0;
         lobby.players.forEach(player => {

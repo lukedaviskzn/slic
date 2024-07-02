@@ -486,7 +486,7 @@ function draw(time) {
         return;
     }
     
-    if (currentFrame % 10 == 0) {
+    if (currentFrame % 5 == 0) {
         poll();
     }
 
