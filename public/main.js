@@ -162,6 +162,10 @@ const ballColours = [
     [0, 0, 255],
 ];
 
+const ballColourNames = [
+"RED","YELLOW","GREEN","BLUE"
+];
+
 /**@type {HTMLCanvasElement | null | undefined}*/
 let canvas;
 /**@type {WebGLRenderingContext | null | undefined}*/
@@ -453,10 +457,11 @@ function main() {
         startElem.style.display = "flex";
     }
 
-    let colourElem = document.getElementById("colourButton");
+    let colourElem = document.getElementById("col");
     if (colourElem && player !== null) {
         const colour = ballColours[player];
-        colourElem.style.backgroundColor = `rgb()`;
+        colourElem.style.color = "rgb("+colour[0]+", "+colour[1]+", "+colour[2]+")";
+        colourElem.innerText = ballColourNames[player];
     }
 
     poll();
