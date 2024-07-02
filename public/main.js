@@ -394,7 +394,7 @@ let dt = 0;
 
 let currentFrame = 0;
 
-/** @type {undefined | {id: string, status: 'waiting' | 'playing' | 'finished', gravityAngle: number, boardSize: number, walls: [{t: boolean, l: boolean}], players: [{gravityAngle: number, x: number, y: number, vx: number, vy: number}]}} */
+/** @type {undefined | {id: string, status: 'waiting' | 'playing' | 'finished', gravityAngle: number, winner: number, boardSize: number, walls: [{t: boolean, l: boolean}], players: [{gravityAngle: number, x: number, y: number, vx: number, vy: number}]}} */
 let latestLobbyState;
 let latestLobbyTime = 0;
 
@@ -510,10 +510,28 @@ function draw(time) {
     if (currentFrame % 5 == 0) {
         poll();
     }
+    
+    let winElem = document.getElementById("winScreen");
 
     if (player !== null && ball && latestLobbyState.status == "waiting") {
         ball.centre.y = 0.5 - 0.05;
         ball.centre.x = Math.round((player + 1) / (latestLobbyState.players.length + 1) * latestLobbyState.boardSize) / latestLobbyState.boardSize - 0.5 - 0.05;
+    }
+    if (latestLobbyState.status == "finished") {
+        if (winElem) {
+            winElem.style.display = "flex";
+        }
+        let playerElem = document.getElementById("winPlayer");
+        if (playerElem) {
+            playerElem.innerText = ballColourNames[latestLobbyState.winner];
+        }
+        
+        ballColourNames
+        latestLobbyState.winner;
+    } else {
+        if (winElem) {
+            winElem.style.display = "none";
+        }
     }
 
     currentFrame += 1;
@@ -706,7 +724,9 @@ function poll() {
         params.vx = ballVel.x+"";
         params.vy = ballVel.y+"";
         params.gravity = targetRot+"";
-        params.win = ball.centre.y < -0.5;
+        if (ball.centre.y < -0.5) {
+            params.win = "";
+        }
     }
 
     fetch("/lobby/poll?" + new URLSearchParams(params)).then(data => {
