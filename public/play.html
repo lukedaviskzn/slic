@@ -9,7 +9,7 @@
     <script>
         async function start() {
             try {
-                const url = new URLSearchParams(window.location.search);
+                const urlParams = new URLSearchParams(window.location.search);
                 const lobby = urlParams.get('lobby') ?? "";
                 let data = await fetch("/lobby/start?" + new URLSearchParams({ lobby: lobby }));
                 let json = await data.json();
