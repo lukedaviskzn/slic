@@ -443,6 +443,11 @@ function main() {
         ball = new Sphere(new Vec2(-0.05, 0.4), 0.025);
     }
 
+    let lobbyElem = document.getElementById("lobby");
+    if (lobbyElem) {
+        lobbyElem.innerText = lobbyId+"";
+    }
+
     poll();
 
     requestAnimationFrame(draw);
