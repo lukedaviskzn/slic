@@ -428,8 +428,8 @@ function main() {
 
             rot = rot*9/10 + (Math.atan2(gy, gx) - Math.PI/2) / 10;
 
-            ballVel.x -= b.x * dt;
-            ballVel.y -= b.y * dt;
+            ballVel.x += b.x * dt;
+            ballVel.y += b.y * dt;
         }, false);
     } else {
         throw "Doesn't support device orientation.";
@@ -467,7 +467,7 @@ function drawObject(gl, r, g, b, renderMode, model) {
 function draw(time) {
     if (!lastTime) lastTime = time;
     
-    dt = (time - lastTime) / 1000.0;
+    dt = Math.max((time - lastTime) / 1000.0, 1/10.0);
     lastTime = time;
 
     if (!canvas || !gl || !vertexBuffer || !program) return;
