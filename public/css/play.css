@@ -23,6 +23,7 @@ html, body {
 #lobbyPanel {
     height: 60px;
     top: 0; left: 0; right: 0;
+    z-index: 10;
     bottom: auto;
     position: absolute;
     background-color: white;
@@ -40,6 +41,15 @@ html, body {
 }
 
 #startButton {
+    display: none;
+    position: absolute;
+    top: 5px;
+    right: 5px;
+    height: 45px;
+    width: 100px;
+}
+
+#resetButton {
     display: none;
     position: absolute;
     top: 5px;
