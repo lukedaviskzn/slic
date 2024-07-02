@@ -436,8 +436,8 @@ function main() {
 
             targetRot = targetRot*9/10 + (Math.atan2(gy, gx) - Math.PI/2) / 10;
 
-            acc.x = b.x;
-            acc.y = b.y;
+            acc.x = -b.x;
+            acc.y = -b.y;
         }, false);
     } else {
         throw "Doesn't support device orientation.";
