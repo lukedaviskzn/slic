@@ -153,7 +153,14 @@ const player = (() => {
     }
 })();
 
-const wall_height = 0.1;
+const wallHeight = 0.1;
+
+const ballColours = [
+    [255, 0, 0],
+    [255, 255, 0],
+    [255, 0, 255],
+    [0, 0, 255],
+];
 
 /**@type {HTMLCanvasElement | null | undefined}*/
 let canvas;
@@ -515,7 +522,7 @@ function draw(time) {
     for (let i = 0; i < size+1; i++) {
         for (let j = 0; j < size+1; j++) {
             if (i < size && latestLobbyState.walls[j+(size+1)*i].t) {
-                const wall = matMul(translate(-0.5 + 0.5/size + i/size, 0.5 - j/size, wall_height/2), matMul(rotX(Math.PI/2), scale(1/size, wall_height, 1.0)));
+                const wall = matMul(translate(-0.5 + 0.5/size + i/size, 0.5 - j/size, wallHeight/2), matMul(rotX(Math.PI/2), scale(1/size, wallHeight, 1.0)));
                 
                 // wall
                 drawObject(gl, 90/255, 177/255, 187/255, 2, matMul(board, wall));
@@ -525,7 +532,7 @@ function draw(time) {
             }
 
             if (j < size && latestLobbyState.walls[j+(size+1)*i].l) {
-                const wall = matMul(translate(-0.5 + i/size, 0.5 - 0.5/size - j/size, wall_height/2), matMul(rotZ(Math.PI/2), matMul(rotX(Math.PI/2), scale(1/size, wall_height, 1.0))));
+                const wall = matMul(translate(-0.5 + i/size, 0.5 - 0.5/size - j/size, wallHeight/2), matMul(rotZ(Math.PI/2), matMul(rotX(Math.PI/2), scale(1/size, wallHeight, 1.0))));
                 
                 // wall
                 drawObject(gl, 90/255, 177/255, 187/255, 2, matMul(board, wall));
