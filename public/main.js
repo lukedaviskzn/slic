@@ -384,8 +384,11 @@ let acc = new Vec2(0, 0);
 let lastTime;
 let dt = 0;
 
-/** @type {undefined | {id: string, status: 'waiting' | 'playing', gravityAngle: number, boardSize: number, walls: [{t: boolean, l: boolean}], players: [{gravityAngle: number, x: number, y: number}]}} */
+let currentFrame = 0;
+
+/** @type {undefined | {id: string, status: 'waiting' | 'playing', gravityAngle: number, boardSize: number, walls: [{t: boolean, l: boolean}], players: [{gravityAngle: number, x: number, y: number, vx: number, vy: number}]}} */
 let latestLobbyState;
+let latestLobbyTime = 0;
 
 function main() {
     canvas = /**@type {HTMLCanvasElement | null}*/(document.getElementById("canvas"));
@@ -481,7 +484,13 @@ function draw(time) {
         requestAnimationFrame(draw);
         return;
     }
-    poll();
+    
+    if (currentFrame % 10 == 0) {
+        poll();
+    }
+
+    currentFrame += 1;
+    
     canvas.width = window.innerWidth;
     canvas.height = window.innerHeight;
 
@@ -503,7 +512,9 @@ function draw(time) {
     gl.clearColor(30/255, 21/255, 42/255, 1.0);
     gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
 
-    const boardZRot = latestLobbyState.gravityAngle;
+    rot = rot*4/5 + latestLobbyState.gravityAngle/5;
+
+    const boardZRot = rot;
     const boardRot = rotZ(boardZRot / (player ? 10.0 : 1.0));
 
     const board = matMul(translate(0, 0, -1.5), boardRot);
@@ -566,6 +577,9 @@ function draw(time) {
 
         // ball
         drawObject(gl, 0/255, 230/255, 23/255, 1, ballModel);
+
+        p.x += p.vx * dt;
+        p.y += p.vy * dt;
     }
 
     requestAnimationFrame(draw);
@@ -646,7 +660,7 @@ function runCollisions(dt, until=undefined) {
 }
 
 function poll() {
-    let params = { lobby: lobby, bx: ball?.centre.x+"", by: ball?.centre.y+"", gravity: targetRot+"" };
+    let params = { lobby: lobby, bx: ball?.centre.x+"", by: ball?.centre.y+"", vx: ballVel.x+"", vy: ballVel.y+"", gravity: targetRot+"" };
     if (player !== null) {
         params.player = player;
     }
@@ -657,7 +671,9 @@ function poll() {
                 alert(json.error);
                 return;
             }
-            latestLobbyState = json;
+            if (latestLobbyTime < json.timestamp) {
+                latestLobbyState = json.lobby;
+            }
         }).catch(err => alert(err));
     }).catch(err => alert(err));
 }

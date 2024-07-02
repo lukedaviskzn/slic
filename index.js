@@ -8,7 +8,7 @@ app.use(express.static('public'));
 const defaultBoardSize = 10;
 
 /**
- * @type {Object.<string, {id: string, status: 'waiting' | 'playing', gravityAngle: number. boardSize: number, walls: [{t: boolean, l: boolean}], players: [{gravityAngle: number, x: number, y: number}]}>}
+ * @type {Object.<string, {id: string, status: 'waiting' | 'playing', gravityAngle: number. boardSize: number, walls: [{t: boolean, l: boolean}], players: [{gravityAngle: number, x: number, y: number, vx: number, vy: number}]}>}
  */
 let lobbies = {};
 
@@ -55,6 +55,8 @@ app.get("/lobby/join", (req, res) => {
             gravityAngle: 0,
             x: 0,
             y: 0,
+            vx: 0,
+            vy: 0,
         });
         res.json({
             player: lobby.players.length-1,
@@ -101,6 +103,8 @@ app.get("/lobby/poll", (req, res) => {
     let gravity = playerId !== null ? parseFloat(req.query.gravity) : 0.0;
     let bx = playerId !== null ? parseFloat(req.query.bx) : 0.0;
     let by = playerId !== null ? parseFloat(req.query.by) : 0.0;
+    let vx = playerId !== null ? parseFloat(req.query.vx) : 0.0;
+    let vy = playerId !== null ? parseFloat(req.query.vy) : 0.0;
     
     let lobby = lobbies[lobbyId];
     
@@ -113,13 +117,18 @@ app.get("/lobby/poll", (req, res) => {
         lobby.players[playerId].gravityAngle = gravity;
         lobby.players[playerId].x = bx;
         lobby.players[playerId].y = by;
+        lobby.players[playerId].vx = vx;
+        lobby.players[playerId].vy = vy;
     
         let averageGravity = circularMean(lobby.players.map(player => player.gravityAngle));
     
         lobby.gravityAngle = lobby.gravityAngle / 2.0 + averageGravity / 2.0;
     }
 
-    res.json(lobby);
+    res.json({
+        timestamp: new Date().getTime(),
+        lobby,
+    });
 });
 
 app.listen(port, '0.0.0.0', () => {
