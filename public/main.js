@@ -537,8 +537,8 @@ function draw(time) {
     }
 
     if (ball) {
-        ballVel.x -= 1.0*dt*-Math.sin(boardZRot);
-        ballVel.y -= 1.0*dt*Math.cos(boardZRot);
+        ballVel.x -= 1.0*dt*-Math.sin(rot);
+        ballVel.y -= 1.0*dt*Math.cos(rot);
     
         ballVel.x += acc.x;
         ballVel.y += acc.y;
