@@ -142,21 +142,26 @@ class Sphere {
     }
 }
 
-let boardSize = 10;
 let wall_height = 0.1;
+
+let boardSizeX = getMazeArrayWidth();
+let boardSizeY = getRowCount();
+
+console.log("x:" + boardSizeX);
+console.log("y:" + boardSizeY);
 /**
  * @type {{t: boolean, l: boolean}[]}
  */
-let walls = [];
+let walls = generateMaze();
 
-for (let i = 0; i < boardSize + 1; i++) {
-    for (let j = 0; j < boardSize + 1; j++) {
-        walls.push({
-            t: Math.random() > 0.5,
-            l: Math.random() > 0.5,
-        });
-    }
-}
+// for (let i = 0; i < boardSize + 1; i++) {
+//     for (let j = 0; j < boardSize + 1; j++) {
+//         walls.push({
+//             t: Math.random() > 0.5,
+//             l: Math.random() > 0.5,
+//         });
+//     }
+// }
 
 /**@type {HTMLCanvasElement | null | undefined}*/
 let canvas;
@@ -498,26 +503,26 @@ function draw(time) {
 
     let cap = matMul(translate(0.0, 0.5, 0.0), matMul(rotX(Math.PI/2), scale(1.0, 0.005, 1.0)));
 
-    for (let i = 0; i < boardSize+1; i++) {
-        for (let j = 0; j < boardSize+1; j++) {
-            if (i < boardSize && walls[j+boardSize*i].t) {
-                let wall = matMul(translate(-0.5 + 0.5/boardSize + i/boardSize, 0.5 - j/boardSize, wall_height/2), matMul(rotX(Math.PI/2), scale(1/boardSize, wall_height, 1.0)));
-                
-                // wall
-                drawObject(gl, 90/255, 177/255, 187/255, 2, matMul(board, wall));
+    for (let i = 0; i < boardSizeX; i++) {
+        for (let j = 0; j < boardSizeY; j++) {
+            // Calculate the correct index for the walls array
+            let index = j * boardSizeX + i; // This ensures we iterate over the maze correctly in a row-major order
 
-                // cap
-                drawObject(gl, 120/255, 241/255, 255/255, 0, matMul(board, matMul(wall, cap)));
+            // Check for top walls
+            if (i < boardSizeX && walls[index].t) {
+                let wall = matMul(translate(-0.5 + 0.5 / boardSizeX + i / boardSizeX, 0.5 - j / boardSizeY, wall_height / 2), matMul(rotX(Math.PI / 2), scale(1 / boardSizeX, wall_height, 1.0)));
+                drawObject(gl, 90/255, 177/255, 187/255, 2, matMul(board, wall));
+            // Draw the cap
+            drawObject(gl, 120/255, 241/255, 255/255, 0, matMul(board, matMul(wall, cap)));
             }
 
-            if (j < boardSize && walls[j+boardSize*i].l) {
-                let wall = matMul(translate(-0.5 + i/boardSize, 0.5 - 0.5/boardSize - j/boardSize, wall_height/2), matMul(rotZ(Math.PI/2), matMul(rotX(Math.PI/2), scale(1/boardSize, wall_height, 1.0))));
-                
-                // wall
+            // Check for left walls
+            if (j < boardSizeY && walls[index].l) {
+                let wall = matMul(translate(-0.5 + i / boardSizeX, 0.5 - 0.5 / boardSizeY - j / boardSizeY, wall_height / 2), matMul(rotZ(Math.PI / 2), matMul(rotX(Math.PI / 2), scale(1 / boardSizeY, wall_height, 1.0))));
                 drawObject(gl, 90/255, 177/255, 187/255, 2, matMul(board, wall));
 
-                // cap
-                drawObject(gl, 120/255, 241/255, 255/255, 0, matMul(board, matMul(wall, cap)));
+                // Draw the cap
+            drawObject(gl, 120/255, 241/255, 255/255, 0, matMul(board, matMul(wall, cap)));
             }
         }
     }
@@ -538,16 +543,20 @@ function draw(time) {
     requestAnimationFrame(draw);
 }
 
-function runCollisions(until=(boardSize+1)*(boardSize+1)) {
+function runCollisions(until = boardSizeX * boardSizeY) {
     for (let idx = 0; idx < until; idx++) {
-        let i = Math.floor(idx/boardSize);
-        let j = idx % boardSize;
+        let i = Math.floor(idx / boardSizeY); // Correctly calculate the x position
+        let j = idx % boardSizeY; // Correctly calculate the y position
         // there is a wall here
-        if (i < boardSize && walls[idx].t) {
-            let wallLeft = -0.5 + i/boardSize;
-            let wallY = 0.5 - j/boardSize;
+        let index = j * boardSizeX + i; // This matches the drawing loop's indexing
 
-            let wall = new AABB(new Vec2(wallLeft, wallY-0.05/boardSize), new Vec2(wallLeft+1/boardSize, wallY+0.05/boardSize));
+        // Check for collisions with top walls
+        if (i < boardSizeX && walls[index].t) {
+            let wallLeft = -0.5 + i / boardSizeX;
+            let wallY = 0.5 - j / boardSizeY;
+            let wall = new AABB(new Vec2(wallLeft, wallY - 0.05 / boardSizeY), new Vec2(wallLeft + 1 / boardSizeX, wallY + 0.05 / boardSizeY));
+
+            // Collision detection logic...
 
             if (wall.collideSphere(ball)) {
                 // Citation: https://www.gamedev.net/forums/topic/544686-sphere-aabb-collision-repsonse/544686/
@@ -569,11 +578,11 @@ function runCollisions(until=(boardSize+1)*(boardSize+1)) {
             }
         }
         // there is a wall here
-        if (j < boardSize && walls[idx].l) {
-            let wallX = -0.5 + i/boardSize;
-            let wallBottom = 0.5 - (j+1)/boardSize;
-            
-            let wall = new AABB(new Vec2(wallX-0.05/boardSize, wallBottom), new Vec2(wallX+0.05/boardSize, wallBottom+1/boardSize));
+        // Check for collisions with left walls
+        if (j < boardSizeY && walls[index].l) {
+            let wallX = -0.5 + i / boardSizeX;
+            let wallBottom = 0.5 - (j + 1) / boardSizeY;
+            let wall = new AABB(new Vec2(wallX - 0.05 / boardSizeX, wallBottom), new Vec2(wallX + 0.05 / boardSizeX, wallBottom + 1 / boardSizeY));
 
             if (wall.collideSphere(ball)) {
                 // Citation: https://www.gamedev.net/forums/topic/544686-sphere-aabb-collision-repsonse/544686/
