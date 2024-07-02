@@ -143,7 +143,7 @@ class Sphere {
 }
 
 const urlParams = new URLSearchParams(window.location.search);
-const lobby = urlParams.get('lobby') ?? "";
+const lobbyId = urlParams.get('lobby') ?? "";
 const player = (() => {
     let p = urlParams.get('player');
     if (p) {
@@ -280,9 +280,6 @@ function rotZ(angle) {
     ]);
 }
 
-const statusElem = document.getElementById("status");
-if (!statusElem) throw "Status element missing.";
-
 /**
  * @param {WebGLRenderingContext} gl
  */
@@ -417,24 +414,14 @@ function main() {
     gl.vertexAttribPointer(0, 3, gl.FLOAT, false, 0, 0);
 
     if (window.DeviceOrientationEvent) {
-        // window.addEventListener('deviceorientation', (event) => {
-        //     if (statusElem) statusElem.innerText = JSON.stringify(event);
-        // }, false);
-        // window.addEventListener('deviceorientationabsolute', (event) => {
-        //     if (!event.alpha || !event.beta || !event.gamma || !statusElem) return;
-        //     // statusElem.innerText = "Alpha: " + Math.round(event.alpha * 100.0)/100.0 + ", Beta: " + Math.round(event.beta * 100.0)/100.0 + ", Gamma: " + Math.round(event.gamma * 100.0)/100.0;
-        //     rot = event.beta;
-        // }, false);
         window.addEventListener('devicemotion', (event) => {
             const a = event.accelerationIncludingGravity
             const b = event.acceleration;
 
-            if (!a?.x || !b?.x || !a?.y || !b?.y || !a?.z || !b?.z || !statusElem) return;
+            if (!a?.x || !b?.x || !a?.y || !b?.y || !a?.z || !b?.z) return;
 
             const gx = a.x - b.x;
             const gy = a.y - b.y;
-
-            statusElem.innerText = (Math.round(Math.atan2(gy, gx)*100.0)/100.0) + "";
 
             targetRot = targetRot*9/10 + (Math.atan2(gy, gx) - Math.PI/2) / 10;
 
@@ -660,7 +647,7 @@ function runCollisions(dt, until=undefined) {
 }
 
 function poll() {
-    let params = { lobby: lobby, bx: ball?.centre.x+"", by: ball?.centre.y+"", vx: ballVel.x+"", vy: ballVel.y+"", gravity: targetRot+"" };
+    let params = { lobby: lobbyId, bx: ball?.centre.x+"", by: ball?.centre.y+"", vx: ballVel.x+"", vy: ballVel.y+"", gravity: targetRot+"" };
     if (player !== null) {
         params.player = player;
     }
