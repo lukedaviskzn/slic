@@ -561,13 +561,11 @@ function runCollisions(until=(boardSize+1)*(boardSize+1)) {
                 
                 let push = pbox.sub(psphere);
 
-                ball.centre = ball.centre.add(push);
+                ball.centre = ball.centre.add(push.mul(1.01));
 
                 let proj = ballVel.project(push.div(push.length()));
                 
                 ballVel = ballVel.add(proj.mul(-1.5));
-
-                runCollisions(idx + 1);
             }
         }
         // there is a wall here
@@ -589,13 +587,11 @@ function runCollisions(until=(boardSize+1)*(boardSize+1)) {
                 
                 let push = pbox.sub(psphere);
 
-                ball.centre = ball.centre.add(push);
+                ball.centre = ball.centre.add(push.mul(1.01));
 
                 let proj = ballVel.project(push.div(push.length()));
                 
                 ballVel = ballVel.add(proj.mul(-1.5));
-
-                runCollisions(idx + 1);
             }
         }
     }
