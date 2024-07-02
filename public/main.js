@@ -378,6 +378,7 @@ let ball;
 let ballVel = new Vec2(0, 0);
 
 let rot = 0;
+let targetRot = 0;
 let acc = new Vec2(0, 0);
 
 let lastTime;
@@ -432,7 +433,7 @@ function main() {
 
             statusElem.innerText = (Math.round(Math.atan2(gy, gx)*100.0)/100.0) + "";
 
-            rot = rot*9/10 + (Math.atan2(gy, gx) - Math.PI/2) / 10;
+            targetRot = targetRot*9/10 + (Math.atan2(gy, gx) - Math.PI/2) / 10;
 
             acc.x = b.x;
             acc.y = b.y;
@@ -504,7 +505,7 @@ function draw(time) {
     gl.clearColor(30/255, 21/255, 42/255, 1.0);
     gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
 
-    const boardZRot = rot;
+    const boardZRot = latestLobbyState.gravityAngle;
     const boardRot = rotZ(boardZRot / (player ? 10.0 : 1.0));
 
     const board = matMul(translate(0, 0, -1.5), boardRot);
@@ -588,55 +589,59 @@ function runCollisions(dt, until=undefined) {
         until = (size+1)*(size+1);
     }
 
-    for (let idx = 0; idx < until; idx++) {
-        const i = Math.floor(idx/(size+1));
-        const j = idx % (size+1);
-        // there is a wall here
-        if (i < size && latestLobbyState.walls[idx].t) {
-            const wallLeft = -0.5 + (i - extendBox)/size;
-            const wallY = 0.5 - j/size;
+    let bx = Math.round((ball.centre.x + 0.5) * size);
+    let by = Math.round((ball.centre.y + 0.5) * size);
 
-            const wall = new AABB(new Vec2(wallLeft, wallY-extendBox/size), new Vec2(wallLeft+(1+extendBox*2)/size, wallY+extendBox/size));
-
-            if (wall.collideSphere(ball)) {
-                // Citation: https://www.gamedev.net/forums/topic/544686-sphere-aabb-collision-repsonse/544686/
-
-                const pbox = wall.closestPoint(ball.centre);
-
-                let delta = pbox.sub(ball.centre);
-                delta = delta.mul(ball.radius / (delta.length()+0.0001));
-
-                let psphere = ball.centre.add(delta);
-                
-                const push = pbox.sub(psphere);
-
-                ball.centre = ball.centre.add(push.mul(0.1));
-
-                ballVel = ballVel.add(push.mul(0.1/dt));
+    for (let i = Math.max(bx - 2, 0); i < Math.min(bx + 2, size); i++) {
+        for (let j = Math.max(by - 2, 0); j < Math.min(by + 2, size); j++) {
+            let idx = j + i*(size+1);
+            // there is a wall here
+            if (i < size && latestLobbyState.walls[idx].t) {
+                const wallLeft = -0.5 + (i - extendBox)/size;
+                const wallY = 0.5 - j/size;
+    
+                const wall = new AABB(new Vec2(wallLeft, wallY-extendBox/size), new Vec2(wallLeft+(1+extendBox*2)/size, wallY+extendBox/size));
+    
+                if (wall.collideSphere(ball)) {
+                    // Citation: https://www.gamedev.net/forums/topic/544686-sphere-aabb-collision-repsonse/544686/
+    
+                    const pbox = wall.closestPoint(ball.centre);
+    
+                    let delta = pbox.sub(ball.centre);
+                    delta = delta.mul(ball.radius / (delta.length()+0.0001));
+    
+                    let psphere = ball.centre.add(delta);
+                    
+                    const push = pbox.sub(psphere);
+    
+                    ball.centre = ball.centre.add(push.mul(0.1));
+    
+                    ballVel = ballVel.add(push.mul(0.1/dt));
+                }
             }
-        }
-        // there is a wall here
-        if (j < size && latestLobbyState.walls[idx].l) {
-            const wallX = -0.5 + i/size;
-            const wallBottom = 0.5 - (j+1)/size;
-            
-            const wall = new AABB(new Vec2(wallX-0.05/size, wallBottom), new Vec2(wallX+0.05/size, wallBottom+1/size));
-
-            if (wall.collideSphere(ball)) {
-                // Citation: https://www.gamedev.net/forums/topic/544686-sphere-aabb-collision-repsonse/544686/
-
-                const pbox = wall.closestPoint(ball.centre);
-
-                let delta = pbox.sub(ball.centre);
-                delta = delta.mul(ball.radius / (delta.length()+0.0001));
-
-                const psphere = ball.centre.add(delta);
+            // there is a wall here
+            if (j < size && latestLobbyState.walls[idx].l) {
+                const wallX = -0.5 + i/size;
+                const wallBottom = 0.5 - (j+1)/size;
                 
-                const push = pbox.sub(psphere);
-
-                ball.centre = ball.centre.add(push.mul(0.1));
-
-                ballVel = ballVel.add(push.mul(0.1/dt));
+                const wall = new AABB(new Vec2(wallX-0.05/size, wallBottom), new Vec2(wallX+0.05/size, wallBottom+1/size));
+    
+                if (wall.collideSphere(ball)) {
+                    // Citation: https://www.gamedev.net/forums/topic/544686-sphere-aabb-collision-repsonse/544686/
+    
+                    const pbox = wall.closestPoint(ball.centre);
+    
+                    let delta = pbox.sub(ball.centre);
+                    delta = delta.mul(ball.radius / (delta.length()+0.0001));
+    
+                    const psphere = ball.centre.add(delta);
+                    
+                    const push = pbox.sub(psphere);
+    
+                    ball.centre = ball.centre.add(push.mul(0.1));
+    
+                    ballVel = ballVel.add(push.mul(0.1/dt));
+                }
             }
         }
     }
@@ -646,7 +651,7 @@ let polling = false;
 
 function poll() {
     polling = true;
-    let params = { lobby: lobby, bx: ball?.centre.x+"", by: ball?.centre.y+"", gravity: rot+"" };
+    let params = { lobby: lobby, bx: ball?.centre.x+"", by: ball?.centre.y+"", gravity: targetRot+"" };
     if (player !== null) {
         params.player = player;
     }
