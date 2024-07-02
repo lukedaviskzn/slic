@@ -475,6 +475,8 @@ function draw(time) {
     
     dt = Math.min((time - lastTime) / 1000.0, 1/30.0);
     lastTime = time;
+    
+    let lobbyElem = document.getElementById("lobby");
 
     if (!canvas || !gl || !vertexBuffer || !program) {
         return;
@@ -552,10 +554,14 @@ function draw(time) {
         ballVel.x -= 1.0*dt*-Math.sin(rot);
         ballVel.y -= 1.0*dt*Math.cos(rot);
     
-        ballVel.x += acc.x;
-        ballVel.y += acc.y;
+        ballVel.x += acc.x * dt;
+        ballVel.y += acc.y * dt;
         
         const numSteps = Math.ceil(ballVel.length() / 0.05);
+        
+        if (lobbyElem) {
+            lobbyElem.innerText = Math.round(1/dt)+" "+numSteps;
+        }
     
         for (let i = 0; i < numSteps; i++) {
             ball.centre.x += ballVel.x*dt / numSteps;
@@ -575,10 +581,13 @@ function draw(time) {
         const ballModel = matMul(translate(0,0,-1.5), matMul(boardRot, matMul(translate(bx, by, 0.05), scale(br*2))));
 
         // ball
-        drawObject(gl, 0/255, 230/255, 23/255, 1, ballModel);
+        const colour = ballColours[i];
+        drawObject(gl, colour[0]/255, colour[1]/255, colour[2]/255, 1, ballModel);
 
         p.x += p.vx * dt;
         p.y += p.vy * dt;
+        p.vx *= 0.8;
+        p.vy *= 0.8;
     }
 
     requestAnimationFrame(draw);
@@ -627,9 +636,9 @@ function runCollisions(dt, until=undefined) {
                     
                     const push = pbox.sub(psphere);
     
-                    ball.centre = ball.centre.add(push.mul(0.1));
+                    ball.centre = ball.centre.add(push.mul(0.5));
     
-                    ballVel = ballVel.add(push.mul(0.1/dt));
+                    ballVel = ballVel.add(push.mul(0.02/dt));
 
                     console.log("Collided")
                 }
@@ -653,9 +662,9 @@ function runCollisions(dt, until=undefined) {
                     
                     const push = pbox.sub(psphere);
     
-                    ball.centre = ball.centre.add(push.mul(0.1));
+                    ball.centre = ball.centre.add(push.mul(0.5));
     
-                    ballVel = ballVel.add(push.mul(0.1/dt));
+                    ballVel = ballVel.add(push.mul(0.02/dt));
                 }
             }
         }

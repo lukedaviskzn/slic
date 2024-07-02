@@ -124,7 +124,7 @@ app.get("/lobby/poll", (req, res) => {
         lobby.players.forEach(player => {
             averageGravity += player.gravityAngle;
         });
-        averageGravity /= lobby.players;
+        averageGravity /= lobby.players.length || 1;
     
         lobby.gravityAngle = lobby.gravityAngle / 2.0 + averageGravity / 2.0;
     }
