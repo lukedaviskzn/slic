@@ -158,7 +158,7 @@ const wallHeight = 0.1;
 const ballColours = [
     [255, 0, 0],
     [255, 255, 0],
-    [255, 0, 255],
+    [0, 255, 0],
     [0, 0, 255],
 ];
 
@@ -672,9 +672,15 @@ function runCollisions(dt, until=undefined) {
 }
 
 function poll() {
-    let params = { lobby: lobbyId, bx: ball?.centre.x+"", by: ball?.centre.y+"", vx: ballVel.x+"", vy: ballVel.y+"", gravity: targetRot+"" };
-    if (player !== null) {
+    let params = { lobby: lobbyId };
+    if (player !== null && ball) {
         params.player = player;
+        params.bx = ball.centre.x+"";
+        params.by = ball.centre.y+"";
+        params.vx = ballVel.x+"";
+        params.vy = ballVel.y+"";
+        params.gravity = targetRot+"";
+        params.win = ball.centre.y < -0.5;
     }
 
     fetch("/lobby/poll?" + new URLSearchParams(params)).then(data => {

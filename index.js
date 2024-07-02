@@ -1,4 +1,5 @@
 const express = require('express')
+const generateMaze = require('./maze');
 
 const app = express();
 const port = 3030;
@@ -26,17 +27,13 @@ app.get("/lobby/create", (req, res) => {
         gravityAngle: 0,
         winner: -1,
         boardSize: defaultBoardSize,
-        walls: [],
+        walls: generateMaze(defaultBoardSize),
         players: [],
     };
 
-    for (let i = 0; i < lobby.boardSize + 1; i++) {
-        for (let j = 0; j < lobby.boardSize + 1; j++) {
-            lobby.walls.push({
-                t: j == 0 || Math.random() > 0.5,
-                l: i == 0 || i == lobby.boardSize || Math.random() > 0.5,
-            });
-        }
+    for (let i = 0; i < lobby.boardSize; i++) {
+        let idx = lobby.boardSize + i*(lobby.boardSize+1);
+        lobby.walls[idx].t = false;
     }
 
     lobbies[id] = lobby;
@@ -124,6 +121,7 @@ app.get("/lobby/poll", (req, res) => {
 
         if (win && lobby.winner == -1) {
             lobby.winner = playerId;
+            lobby.status = 'waiting';
         }
     
         let averageGravity = 0.0;
