@@ -468,9 +468,7 @@ function main() {
             colourDiv.style.display = "block";
         }
     }
-
     poll();
-
     requestAnimationFrame(draw);
 }
 
@@ -525,7 +523,7 @@ function draw(time) {
         if (playerElem) {
             playerElem.innerText = ballColourNames[latestLobbyState.winner];
 
-            fetch("/lobby/poll?" + new URLSearchParams({lobby: latestLobbyState.id})).then(data => {
+            fetch("/leaderboard/incrementScore?" + new URLSearchParams({lobby: latestLobbyState.id})).then(data => {
                 data.json().then(json => {
                     if (json.error) {
                         alert(json.error);
