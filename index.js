@@ -120,7 +120,11 @@ app.get("/lobby/poll", (req, res) => {
         lobby.players[playerId].vx = vx;
         lobby.players[playerId].vy = vy;
     
-        let averageGravity = circularMean(lobby.players.map(player => player.gravityAngle));
+        let averageGravity = 0.0;
+        lobby.players.forEach(player => {
+            averageGravity += player.gravityAngle;
+        });
+        averageGravity /= lobby.players;
     
         lobby.gravityAngle = lobby.gravityAngle / 2.0 + averageGravity / 2.0;
     }
@@ -134,24 +138,3 @@ app.get("/lobby/poll", (req, res) => {
 app.listen(port, '0.0.0.0', () => {
     console.log(`Listening on port ${port}`);
 });
-
-/**
- * @param {[number]} angles
- * @returns number
- */
-function circularMean(angles){
-    let x_total = 0;
-    let y_total = 0;
-    
-    for (let index = 0; index < angles.length; index++) {
-        const angle = angles[index];
-        const x = Math.sin(angle);
-        const y = Math.cos(angle);
-        x_total += x;
-        y_total += y;
-    }
-
-    let x_average = x_total / angles.length;
-    let y_average = y_total / angles.length;
-    return Math.atan2(x_average, y_average);
-}
