@@ -1,0 +1,64 @@
+html, body {
+    margin: 0;
+    width: 100%;
+    height: 100%;
+    overflow: hidden;
+    font-family: "Archivo", sans-serif;
+}
+
+#lobby {
+    color: rgb(44, 175, 44);
+}
+
+
+#lobbyPanel {
+    
+    width: 100%;
+    height: 60px;
+    top: 0px;
+    bottom: auto;
+    position: absolute;
+    background-color: white;
+    display: flex;
+    justify-content: space-between;
+    padding-left: 5px;
+    padding-right: 5px;
+    align-items: center;
+    font-weight: 700;
+    font-size: 1.5rem;
+}
+
+#startButton {
+    display: none;
+    position: absolute;
+    top: 5px;
+    right: 5px;
+    height: 45px;
+    width: 100px;
+}
+
+
+button {
+    transition-duration: 0.3s;
+    box-shadow: 0px 5px 0px rgb(30, 117, 30);
+    background-color: rgb(44, 175, 44);
+    color: white;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 30px;
+    border-radius: 0.5rem;
+    border-style: none;
+    font-size: large;
+    font-optical-sizing: auto;
+    font-weight: 700;
+    font-style: bold;
+    cursor: pointer;
+}
+
+button:hover {
+    transition-duration: 0.3s;
+    box-shadow: 0px 0px 0px rgb(46, 180, 46);
+    background-color: rgb(59, 218, 59);
+    transform: translateY(5px);
+}

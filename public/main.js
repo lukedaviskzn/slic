@@ -448,6 +448,17 @@ function main() {
         lobbyElem.innerText = lobbyId+"";
     }
 
+    let startElem = document.getElementById("startButton");
+    if (startElem && player === null) {
+        startElem.style.display = "flex";
+    }
+
+    let colourElem = document.getElementById("colourButton");
+    if (colourElem && player !== null) {
+        const colour = ballColours[player];
+        colourElem.style.backgroundColor = `rgb()`;
+    }
+
     poll();
 
     requestAnimationFrame(draw);
