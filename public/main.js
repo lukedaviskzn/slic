@@ -513,6 +513,7 @@ function draw(time) {
     }
     
     let winElem = document.getElementById("winScreen");
+    let leaderBoard = document.getElementById("leaderboard")
 
     if (player !== null && ball && lobbyState.status == "waiting") {
         ball.centre.y = 0.5 - 0.5 / lobbyState.boardSize;
@@ -526,9 +527,45 @@ function draw(time) {
         if (playerElem) {
             playerElem.innerText = ballColourNames[lobbyState.winner];
         }
+        if (leaderBoard){
+            leaderBoard.style.display = "flex";
+        }
+        let leaderBoard1 = document.getElementById("leaderboardEntry1");
+        let leaderBoard2 = document.getElementById("leaderboardEntry2");
+        let leaderBoard3 = document.getElementById("leaderboardEntry3");
+        let leaderBoard4 = document.getElementById("leaderboardEntry4");
+
+        // @ts-ignore
+        let scores = lobbyState.scores;
+        // Create an array of indices
+        let indices = scores.map((_, index) => index);
+        // Sort the indices array based on the values in the original array in descending order
+        indices.sort((a, b) => scores[b] - scores[a]);
+        
+        if (leaderBoard1) {
+            // @ts-ignore
+            leaderBoard1.innerText = lobbyState.usernames[indices[0]] + ":" +  scores[indices[0]]
+        }
+        if (leaderBoard2) {
+            // @ts-ignore
+            leaderBoard2.innerText = lobbyState.usernames[indices[1]] + ":" +  scores[indices[1]]
+        }
+        if (leaderBoard3) {
+            // @ts-ignore
+            leaderBoard3.innerText = lobbyState.usernames[indices[2]] + ":" + scores[indices[2]]
+        }
+        if (leaderBoard1) {
+            // @ts-ignore
+            leaderBoard1.innerText = lobbyState.usernames[indices[3]] + ":" +  scores[indices[3]]
+        }
+
     } else {
         if (winElem) {
             winElem.style.display = "none";
+        }
+
+        if(leaderBoard){
+            leaderBoard.style.display = "none";
         }
     }
 

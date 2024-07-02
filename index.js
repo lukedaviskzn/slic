@@ -157,6 +157,7 @@ app.get("/lobby/poll", (req, res) => {
         if (lobby.status === 'playing' && win && lobby.winner == -1) {
             lobby.winner = playerId;
             lobby.status = 'finished';
+            lobby.scores[playerId] += 1;
         }
     
         let averageGravity = 0.0;
