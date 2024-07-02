@@ -467,7 +467,7 @@ function drawObject(gl, r, g, b, renderMode, model) {
 function draw(time) {
     if (!lastTime) lastTime = time;
     
-    dt = Math.max((time - lastTime) / 1000.0, 1/10.0);
+    dt = Math.min((time - lastTime) / 1000.0, 1/30.0);
     lastTime = time;
 
     if (!canvas || !gl || !vertexBuffer || !program) return;
