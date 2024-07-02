@@ -428,8 +428,8 @@ function main() {
 
             rot = rot*9/10 + (Math.atan2(gy, gx) - Math.PI/2) / 10;
 
-            ballVel.x += b.x * dt;
-            ballVel.y += b.y * dt;
+            acc.x = b.x;
+            acc.y = b.y;
         }, false);
     } else {
         throw "Doesn't support device orientation.";
@@ -443,6 +443,8 @@ let lastHeight;
 
 let ball = new Sphere(new Vec2(-0.05, 0.05), 0.025);
 let ballVel = new Vec2(0, 0);
+
+let acc = new Vec2(0, 0);
 
 let lastTime;
 let dt = 0;
@@ -527,6 +529,9 @@ function draw(time) {
 
     ballVel.x -= 1.0*dt*-Math.sin(boardZRot);
     ballVel.y -= 1.0*dt*Math.cos(boardZRot);
+
+    ballVel.x += acc.x;
+    ballVel.y += acc.y;
 
     const numSteps = Math.ceil(ballVel.length() / 0.05);
     console.log(numSteps);
