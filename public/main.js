@@ -516,7 +516,7 @@ function draw(time) {
     rot = rot*4/5 + latestLobbyState.gravityAngle/5;
 
     const boardZRot = rot;
-    const boardRot = rotZ(boardZRot / (player ? 10.0 : 1.0));
+    const boardRot = rotZ(boardZRot / (player !== null ? 10.0 : 1.0));
 
     const board = matMul(translate(0, 0, -1.5), boardRot);
 
