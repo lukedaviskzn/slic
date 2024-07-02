@@ -4,11 +4,42 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Slic</title>
-    <link rel="stylesheet" href="style.css">
-    <script src="main.js" type="module"></script>
+    <script>
+        async function newLobby() {
+            try {
+                let data = await fetch("/lobby/create");
+                let lobby = await data.json();
+                window.location = "/play.html?" + new URLSearchParams({ lobby: lobby.id });
+            } catch (err) {
+                alert(err);
+            }
+        }
+
+        async function joinLobby() {
+            try {
+                let t = document.getElementById("lobby")?.value.trim();
+                if (t.length != 6) {
+                    throw "Lobby ID must be 6 letters";
+                }
+                let data = await fetch("/lobby/join?" + new URLSearchParams({ lobby: t }));
+                let json = await data.json();
+                if (json.error) {
+                    throw json.error;
+                }
+                window.location = "play.html?" + new URLSearchParams({ lobby: json.lobby.id, player: json.player });
+            } catch (err) {
+                alert(err);
+            }
+        }
+    </script>
 </head>
 <body>
-    <p id="status">Status: </p>
-    <canvas id="canvas" width="800" height="600"></canvas>
+    <button onclick="javascript:newLobby()">New Lobby</button>
+    <br>
+    <br>
+    <label for="lobby">Lobby Id</label>
+    <input type="text" name="lobby" id="lobby">
+    <br>
+    <button onclick="javascript:joinLobby()">Join Lobby</button>
 </body>
 </html>

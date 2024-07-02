@@ -142,21 +142,18 @@ class Sphere {
     }
 }
 
-const boardSize = 10;
-const wall_height = 0.1;
-/**
- * @type {{t: boolean, l: boolean}[]}
- */
-let walls = [];
-
-for (let i = 0; i < boardSize + 1; i++) {
-    for (let j = 0; j < boardSize + 1; j++) {
-        walls.push({
-            t: j == 0 || Math.random() > 0.5,
-            l: i == 0 || i == boardSize || Math.random() > 0.5,
-        });
+const urlParams = new URLSearchParams(window.location.search);
+const lobby = urlParams.get('lobby') ?? "";
+const player = (() => {
+    let p = urlParams.get('player');
+    if (p) {
+        return parseInt(p);
+    } else {
+        return null;
     }
-}
+})();
+
+const wall_height = 0.1;
 
 /**@type {HTMLCanvasElement | null | undefined}*/
 let canvas;
@@ -175,12 +172,6 @@ const IDENTITY = new Float32Array([
     0,0,1,0,
     0,0,0,1,
 ]);
-
-try {
-    main();
-} catch (error) {
-    alert(error);
-}
 
 /**
  * 
@@ -378,7 +369,22 @@ function compileProgram(gl) {
     }
 }
 
+let lastWidth;
+let lastHeight;
+
+// let ball = new Sphere(new Vec2(-0.05, 0.05), 0.025);
+/** @type {Sphere | undefined} */
+let ball;
+let ballVel = new Vec2(0, 0);
+
 let rot = 0;
+let acc = new Vec2(0, 0);
+
+let lastTime;
+let dt = 0;
+
+/** @type {undefined | {id: string, status: 'waiting' | 'playing', gravityAngle: number, boardSize: number, walls: [{t: boolean, l: boolean}], players: [{gravityAngle: number, x: number, y: number}]}} */
+let latestLobbyState;
 
 function main() {
     canvas = /**@type {HTMLCanvasElement | null}*/(document.getElementById("canvas"));
@@ -435,19 +441,14 @@ function main() {
         throw "Doesn't support device orientation.";
     }
 
+    if (player !== null) {
+        ball = new Sphere(new Vec2(0, 0), 0.025);
+    }
+
+    poll();
+
     requestAnimationFrame(draw);
 }
-
-let lastWidth;
-let lastHeight;
-
-let ball = new Sphere(new Vec2(-0.05, 0.05), 0.025);
-let ballVel = new Vec2(0, 0);
-
-let acc = new Vec2(0, 0);
-
-let lastTime;
-let dt = 0;
 
 function drawObject(gl, r, g, b, renderMode, model) {
     let loc = gl.getUniformLocation(program, "colour");
@@ -472,7 +473,16 @@ function draw(time) {
     dt = Math.min((time - lastTime) / 1000.0, 1/30.0);
     lastTime = time;
 
-    if (!canvas || !gl || !vertexBuffer || !program) return;
+    if (!canvas || !gl || !vertexBuffer || !program) {
+        return;
+    }
+    if (!latestLobbyState) {
+        requestAnimationFrame(draw);
+        return;
+    }
+    if (!polling) {
+        poll();
+    }
     canvas.width = window.innerWidth;
     canvas.height = window.innerHeight;
 
@@ -495,7 +505,7 @@ function draw(time) {
     gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
 
     const boardZRot = rot;
-    const boardRot = rotZ(boardZRot / 10.0);
+    const boardRot = rotZ(boardZRot / (player ? 10.0 : 1.0));
 
     const board = matMul(translate(0, 0, -1.5), boardRot);
 
@@ -503,10 +513,12 @@ function draw(time) {
 
     const cap = matMul(translate(0.0, 0.5, 0.0), matMul(rotX(Math.PI/2), scale(1.0, 0.005, 1.0)));
 
-    for (let i = 0; i < boardSize+1; i++) {
-        for (let j = 0; j < boardSize+1; j++) {
-            if (i < boardSize && walls[j+(boardSize+1)*i].t) {
-                const wall = matMul(translate(-0.5 + 0.5/boardSize + i/boardSize, 0.5 - j/boardSize, wall_height/2), matMul(rotX(Math.PI/2), scale(1/boardSize, wall_height, 1.0)));
+    let size = latestLobbyState.boardSize;
+
+    for (let i = 0; i < size+1; i++) {
+        for (let j = 0; j < size+1; j++) {
+            if (i < size && latestLobbyState.walls[j+(size+1)*i].t) {
+                const wall = matMul(translate(-0.5 + 0.5/size + i/size, 0.5 - j/size, wall_height/2), matMul(rotX(Math.PI/2), scale(1/size, wall_height, 1.0)));
                 
                 // wall
                 drawObject(gl, 90/255, 177/255, 187/255, 2, matMul(board, wall));
@@ -515,8 +527,8 @@ function draw(time) {
                 drawObject(gl, 120/255, 241/255, 255/255, 0, matMul(board, matMul(wall, cap)));
             }
 
-            if (j < boardSize && walls[j+(boardSize+1)*i].l) {
-                const wall = matMul(translate(-0.5 + i/boardSize, 0.5 - 0.5/boardSize - j/boardSize, wall_height/2), matMul(rotZ(Math.PI/2), matMul(rotX(Math.PI/2), scale(1/boardSize, wall_height, 1.0))));
+            if (j < size && latestLobbyState.walls[j+(size+1)*i].l) {
+                const wall = matMul(translate(-0.5 + i/size, 0.5 - 0.5/size - j/size, wall_height/2), matMul(rotZ(Math.PI/2), matMul(rotX(Math.PI/2), scale(1/size, wall_height, 1.0))));
                 
                 // wall
                 drawObject(gl, 90/255, 177/255, 187/255, 2, matMul(board, wall));
@@ -527,42 +539,64 @@ function draw(time) {
         }
     }
 
-    ballVel.x -= 1.0*dt*-Math.sin(boardZRot);
-    ballVel.y -= 1.0*dt*Math.cos(boardZRot);
-
-    ballVel.x += acc.x;
-    ballVel.y += acc.y;
-
-    const numSteps = Math.ceil(ballVel.length() / 0.05);
-    console.log(numSteps);
-
-    for (let i = 0; i < numSteps; i++) {
-        ball.centre.x += ballVel.x*dt / numSteps;
-        ball.centre.y += ballVel.y*dt / numSteps;
+    if (ball) {
+        ballVel.x -= 1.0*dt*-Math.sin(boardZRot);
+        ballVel.y -= 1.0*dt*Math.cos(boardZRot);
     
-        runCollisions(dt / numSteps);
+        ballVel.x += acc.x;
+        ballVel.y += acc.y;
+        
+        const numSteps = Math.ceil(ballVel.length() / 0.05);
+    
+        for (let i = 0; i < numSteps; i++) {
+            ball.centre.x += ballVel.x*dt / numSteps;
+            ball.centre.y += ballVel.y*dt / numSteps;
+        
+            runCollisions(dt / numSteps);
+        }
     }
 
-    const ballModel = matMul(translate(0,0,-1.5), matMul(boardRot, matMul(translate(ball.centre.x, ball.centre.y, 0.05), scale(ball.radius*2))));
+    for (let i = 0; i < latestLobbyState.players.length; i++) {
+        const p = latestLobbyState.players[i];
 
-    // ball
-    drawObject(gl, 0/255, 230/255, 23/255, 1, ballModel);
+        let br = 0.025;
+        let bx = (player === i && ball) ? ball.centre.x : p.x;
+        let by = (player === i && ball) ? ball.centre.y : p.y;
+
+        const ballModel = matMul(translate(0,0,-1.5), matMul(boardRot, matMul(translate(bx, by, 0.05), scale(br*2))));
+
+        // ball
+        drawObject(gl, 0/255, 230/255, 23/255, 1, ballModel);
+    }
 
     requestAnimationFrame(draw);
 }
 
 const extendBox = 0.025;
 
-function runCollisions(dt, until=(boardSize+1)*(boardSize+1)) {
-    for (let idx = 0; idx < until; idx++) {
-        const i = Math.floor(idx/(boardSize+1));
-        const j = idx % (boardSize+1);
-        // there is a wall here
-        if (i < boardSize && walls[idx].t) {
-            const wallLeft = -0.5 + (i - extendBox)/boardSize;
-            const wallY = 0.5 - j/boardSize;
+/**
+ * @param {number} dt
+ * @param {number | undefined} until
+ * @returns 
+ */
+function runCollisions(dt, until=undefined) {
+    if (!ball || !latestLobbyState) return;
 
-            const wall = new AABB(new Vec2(wallLeft, wallY-extendBox/boardSize), new Vec2(wallLeft+(1+extendBox*2)/boardSize, wallY+extendBox/boardSize));
+    let size = latestLobbyState.boardSize;
+
+    if (until === undefined) {
+        until = (size+1)*(size+1);
+    }
+
+    for (let idx = 0; idx < until; idx++) {
+        const i = Math.floor(idx/(size+1));
+        const j = idx % (size+1);
+        // there is a wall here
+        if (i < size && latestLobbyState.walls[idx].t) {
+            const wallLeft = -0.5 + (i - extendBox)/size;
+            const wallY = 0.5 - j/size;
+
+            const wall = new AABB(new Vec2(wallLeft, wallY-extendBox/size), new Vec2(wallLeft+(1+extendBox*2)/size, wallY+extendBox/size));
 
             if (wall.collideSphere(ball)) {
                 // Citation: https://www.gamedev.net/forums/topic/544686-sphere-aabb-collision-repsonse/544686/
@@ -582,11 +616,11 @@ function runCollisions(dt, until=(boardSize+1)*(boardSize+1)) {
             }
         }
         // there is a wall here
-        if (j < boardSize && walls[idx].l) {
-            const wallX = -0.5 + i/boardSize;
-            const wallBottom = 0.5 - (j+1)/boardSize;
+        if (j < size && latestLobbyState.walls[idx].l) {
+            const wallX = -0.5 + i/size;
+            const wallBottom = 0.5 - (j+1)/size;
             
-            const wall = new AABB(new Vec2(wallX-0.05/boardSize, wallBottom), new Vec2(wallX+0.05/boardSize, wallBottom+1/boardSize));
+            const wall = new AABB(new Vec2(wallX-0.05/size, wallBottom), new Vec2(wallX+0.05/size, wallBottom+1/size));
 
             if (wall.collideSphere(ball)) {
                 // Citation: https://www.gamedev.net/forums/topic/544686-sphere-aabb-collision-repsonse/544686/
@@ -606,4 +640,33 @@ function runCollisions(dt, until=(boardSize+1)*(boardSize+1)) {
             }
         }
     }
+}
+
+let polling = false;
+
+function poll() {
+    polling = true;
+    let params = { lobby: lobby, bx: ball?.centre.x+"", by: ball?.centre.y+"", gravity: rot+"" };
+    if (player !== null) {
+        params.player = player;
+    }
+
+    console.log(params);
+    
+    fetch("/lobby/poll?" + new URLSearchParams(params)).then(data => {
+        data.json().then(json => {
+            if (json.error) {
+                alert(json.error);
+                return;
+            }
+            latestLobbyState = json;
+            polling = false;
+        }).catch(err => alert(err));
+    }).catch(err => alert(err));
+}
+
+try {
+    main();
+} catch (error) {
+    alert(error);
 }
