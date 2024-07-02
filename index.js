@@ -33,9 +33,10 @@ app.get("/lobby/create", (req, res) => {
         scores: [],
     };
 
-    for (let i = 0; i < lobby.boardSize; i++) {
-        let idx = lobby.boardSize + i*(lobby.boardSize+1);
-        lobby.walls[idx].t = Math.random() > 0.2;
+    for (let i = 0; i < lobby.boardSize / 4; i++) {
+        let j = Math.max(Math.min(Math.floor(Math.random() * lobby.boardSize), lobby.boardSize), 0);
+        let idx = lobby.boardSize + j*(lobby.boardSize+1);
+        lobby.walls[idx].t = false;
     }
 
     lobbies[id] = lobby;
@@ -88,6 +89,28 @@ app.get("/lobby/start", (req, res) => {
     }
 });
 
+app.get("/lobby/reset", (req, res) => {
+    let lobbyId = req.query.lobby;
+    let lobby = lobbies[lobbyId];
+    if (lobby === undefined) {
+        res.json({'error': "Lobby Doesn't Exist"});
+    } else {
+        lobby.winner = -1;
+        lobby.status = 'waiting';
+        lobby.walls = generateMaze(lobby.boardSize);
+
+        for (let i = 0; i < lobby.boardSize / 4; i++) {
+            let j = Math.max(Math.min(Math.floor(Math.random() * lobby.boardSize), lobby.boardSize), 0);
+            let idx = lobby.boardSize + j*(lobby.boardSize+1);
+            lobby.walls[idx].t = false;
+        }
+        
+        res.json({
+            lobby
+        });
+    }
+});
+
 app.get("/lobby/status", (req, res) => {
     let lobbyId = req.query.lobby;
     let lobby = lobbies[lobbyId];
@@ -131,7 +154,7 @@ app.get("/lobby/poll", (req, res) => {
         lobby.players[playerId].vx = vx;
         lobby.players[playerId].vy = vy;
 
-        if (win && lobby.winner == -1) {
+        if (lobby.status === 'playing' && win && lobby.winner == -1) {
             lobby.winner = playerId;
             lobby.status = 'finished';
         }
@@ -142,7 +165,7 @@ app.get("/lobby/poll", (req, res) => {
         });
         averageGravity /= lobby.players.length || 1;
     
-        lobby.gravityAngle = lobby.gravityAngle * 9 / 10.0 + averageGravity / 10.0;
+        lobby.gravityAngle = lobby.gravityAngle * 4 / 5.0 + averageGravity / 5.0;
     }
 
     res.json({
