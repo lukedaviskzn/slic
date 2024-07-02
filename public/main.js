@@ -153,7 +153,7 @@ const player = (() => {
     }
 })();
 
-const wallHeight = 0.1;
+const wallHeight = 1.0;
 
 const ballColours = [
     [255, 0, 0],
@@ -514,8 +514,8 @@ function draw(time) {
     let winElem = document.getElementById("winScreen");
 
     if (player !== null && ball && latestLobbyState.status == "waiting") {
-        ball.centre.y = 0.5 - 0.05;
-        ball.centre.x = Math.round((player + 1) / (latestLobbyState.players.length + 1) * latestLobbyState.boardSize) / latestLobbyState.boardSize - 0.5 - 0.05;
+        ball.centre.y = 0.5 - 0.5 / latestLobbyState.boardSize;
+        ball.centre.x = Math.round((player + 1) / (latestLobbyState.players.length + 1) * latestLobbyState.boardSize) / latestLobbyState.boardSize - 0.5 - 0.5 / latestLobbyState.boardSize;
     }
     if (latestLobbyState.status == "finished") {
         if (winElem) {
@@ -525,9 +525,6 @@ function draw(time) {
         if (playerElem) {
             playerElem.innerText = ballColourNames[latestLobbyState.winner];
         }
-        
-        ballColourNames
-        latestLobbyState.winner;
     } else {
         if (winElem) {
             winElem.style.display = "none";
@@ -535,17 +532,20 @@ function draw(time) {
     }
 
     currentFrame += 1;
-    
-    canvas.width = window.innerWidth;
-    canvas.height = window.innerHeight;
 
-    if (!perspective || lastWidth !== canvas.width || lastHeight !== canvas.height) {
-        perspective = genPerspective(1.0, canvas.width / canvas.height, 0.1, 100.0);
-        lastWidth = canvas.width;
-        lastHeight = canvas.height;
+    let width = window.innerWidth;
+    let height = window.innerHeight;
+    
+    canvas.width = width;
+    canvas.height = height;
+
+    if (!perspective || lastWidth !== width || lastHeight !== height) {
+        perspective = genPerspective(Math.max(Math.atan(height / width) * 1.5, 1.0), width / height, 0.1, 100.0);
+        lastWidth = width;
+        lastHeight = height;
     }
 
-    gl.viewport(0, 0, canvas.width, canvas.height);
+    gl.viewport(0, 0, width, height);
 
     gl.useProgram(program);
     gl.bindBuffer(gl.ARRAY_BUFFER, vertexBuffer);
@@ -570,10 +570,12 @@ function draw(time) {
 
     let size = latestLobbyState.boardSize;
 
+    let wh = wallHeight / size;
+
     for (let i = 0; i < size+1; i++) {
         for (let j = 0; j < size+1; j++) {
             if (i < size && latestLobbyState.walls[j+(size+1)*i].t) {
-                const wall = matMul(translate(-0.5 + 0.5/size + i/size, 0.5 - j/size, wallHeight/2), matMul(rotX(Math.PI/2), scale(1/size, wallHeight, 1.0)));
+                const wall = matMul(translate(-0.5 + 0.5/size + i/size, 0.5 - j/size, wh/2), matMul(rotX(Math.PI/2), scale(1/size, wh, 1.0)));
                 
                 // wall
                 drawObject(gl, 90/255, 177/255, 187/255, 2, matMul(board, wall));
@@ -583,7 +585,7 @@ function draw(time) {
             }
 
             if (j < size && latestLobbyState.walls[j+(size+1)*i].l) {
-                const wall = matMul(translate(-0.5 + i/size, 0.5 - 0.5/size - j/size, wallHeight/2), matMul(rotZ(Math.PI/2), matMul(rotX(Math.PI/2), scale(1/size, wallHeight, 1.0))));
+                const wall = matMul(translate(-0.5 + i/size, 0.5 - 0.5/size - j/size, wh/2), matMul(rotZ(Math.PI/2), matMul(rotX(Math.PI/2), scale(1/size, wh, 1.0))));
                 
                 // wall
                 drawObject(gl, 90/255, 177/255, 187/255, 2, matMul(board, wall));
@@ -610,6 +612,19 @@ function draw(time) {
         for (let i = 0; i < numSteps; i++) {
             ball.centre.x += ballVel.x*dt / numSteps;
             ball.centre.y += ballVel.y*dt / numSteps;
+
+            if (ball.centre.x > 0.5) {
+                ball.centre.x = 0.5 - 0.5 / latestLobbyState.boardSize;
+                ballVel.x = 0;
+            }
+            if (ball.centre.x < -0.5) {
+                ball.centre.x = -0.5 - 0.5 / latestLobbyState.boardSize;
+                ballVel.x = 0;
+            }
+            if (ball.centre.y > 0.5) {
+                ball.centre.y = 0.5 - 0.5 / latestLobbyState.boardSize;
+                ballVel.y = 0;
+            }
         
             runCollisions(dt / numSteps);
         }
@@ -618,7 +633,7 @@ function draw(time) {
     for (let i = 0; i < latestLobbyState.players.length; i++) {
         const p = latestLobbyState.players[i];
 
-        let br = 0.025;
+        let br = 0.25 / latestLobbyState.boardSize;
         let bx = (player === i && ball) ? ball.centre.x : p.x;
         let by = (player === i && ball) ? ball.centre.y : p.y;
 
@@ -628,16 +643,18 @@ function draw(time) {
         const colour = ballColours[i];
         drawObject(gl, colour[0]/255, colour[1]/255, colour[2]/255, 1, ballModel);
 
-        p.x += p.vx * dt;
-        p.y += p.vy * dt;
-        p.vx *= 0.8;
-        p.vy *= 0.8;
+        if (latestLobbyState.status === 'playing') {
+            p.x += p.vx * dt;
+            p.y += p.vy * dt;
+            p.vx *= 0.8;
+            p.vy *= 0.8;
+        }
     }
 
     requestAnimationFrame(draw);
 }
 
-const extendBox = 0.025;
+const extendBox = 0.25;
 
 /**
  * @param {number} dt
@@ -663,10 +680,11 @@ function runCollisions(dt, until=undefined) {
             let idx = j + i*(size+1);
             // there is a wall here
             if (i < size && latestLobbyState.walls[idx].t) {
-                const wallLeft = -0.5 + (i - extendBox)/size;
+                let extend = extendBox / size;
+                const wallLeft = -0.5 + (i - extend)/size;
                 const wallY = 0.5 - j/size;
     
-                const wall = new AABB(new Vec2(wallLeft, wallY-extendBox/size), new Vec2(wallLeft+(1+extendBox*2)/size, wallY+extendBox/size));
+                const wall = new AABB(new Vec2(wallLeft, wallY-extend/size), new Vec2(wallLeft+(1+extend*2)/size, wallY+extend/size));
     
                 if (wall.collideSphere(ball)) {
                     // Citation: https://www.gamedev.net/forums/topic/544686-sphere-aabb-collision-repsonse/544686/
@@ -724,7 +742,7 @@ function poll() {
         params.vx = ballVel.x+"";
         params.vy = ballVel.y+"";
         params.gravity = targetRot+"";
-        if (ball.centre.y < -0.5) {
+        if (ball.centre.y < -0.6) {
             params.win = "";
         }
     }

@@ -6,7 +6,7 @@ const port = 3030;
 
 app.use(express.static('public'));
 
-const defaultBoardSize = 10;
+const defaultBoardSize = 16;
 
 /**
  * @type {Object.<string, {id: string, status: 'waiting' | 'playing' | 'finished', gravityAngle: number, winner: number, boardSize: number, walls: [{t: boolean, l: boolean}], players: [{gravityAngle: number, x: number, y: number, vx: number, vy: number}]}>}
@@ -33,7 +33,7 @@ app.get("/lobby/create", (req, res) => {
 
     for (let i = 0; i < lobby.boardSize; i++) {
         let idx = lobby.boardSize + i*(lobby.boardSize+1);
-        lobby.walls[idx].t = false;
+        lobby.walls[idx].t = Math.random() > 0.2;
     }
 
     lobbies[id] = lobby;
@@ -130,7 +130,7 @@ app.get("/lobby/poll", (req, res) => {
         });
         averageGravity /= lobby.players.length || 1;
     
-        lobby.gravityAngle = lobby.gravityAngle / 2.0 + averageGravity / 2.0;
+        lobby.gravityAngle = lobby.gravityAngle * 9 / 10.0 + averageGravity / 10.0;
     }
 
     res.json({
