@@ -9,7 +9,7 @@ app.use(express.static('public'));
 const defaultBoardSize = 16;
 
 /**
- * @type {Object.<string, {id: string, status: 'waiting' | 'playing' | 'finished', gravityAngle: number, winner: number, boardSize: number, walls: [{t: boolean, l: boolean}], players: [{gravityAngle: number, x: number, y: number, vx: number, vy: number}]}>}
+ * @type {Object.<string, {id: string, status: 'waiting' | 'playing' | 'finished', gravityAngle: number, winner: number, boardSize: number, walls: [{t: boolean, l: boolean}], players: [{gravityAngle: number, x: number, y: number, vx: number, vy: number}], powerUps: [{x: number, y: number, skill: '0g', holder: number, timeActivated: number}]}>}
  */
 let lobbies = {};
 
@@ -29,12 +29,31 @@ app.get("/lobby/create", (req, res) => {
         boardSize: defaultBoardSize,
         walls: generateMaze(defaultBoardSize),
         players: [],
+        powerUps: [],
     };
 
     for (let i = 0; i < lobby.boardSize / 4; i++) {
         let j = Math.max(Math.min(Math.floor(Math.random() * lobby.boardSize), lobby.boardSize), 0);
         let idx = lobby.boardSize + j*(lobby.boardSize+1);
         lobby.walls[idx].t = false;
+    }
+
+    for (let i = 0; i < lobby.boardSize * lobby.boardSize / 64; i++) {
+        let x = Math.max(Math.min(Math.floor(Math.random() * lobby.boardSize), lobby.boardSize), 0);
+        let y = Math.max(Math.min(Math.floor(Math.random() * lobby.boardSize), lobby.boardSize), 0);
+
+        if (lobby.powerUps.find(value => value.x == x && value.y == y)) {
+            i -= 1;
+            break;
+        }
+
+        lobby.powerUps.push({
+            x,
+            y,
+            skill: '0g',
+            holder: -1,
+            timeActivated: -1,
+        });
     }
 
     lobbies[id] = lobby;
@@ -92,6 +111,24 @@ app.get("/lobby/reset", (req, res) => {
             let idx = lobby.boardSize + j*(lobby.boardSize+1);
             lobby.walls[idx].t = false;
         }
+
+        for (let i = 0; i < lobby.boardSize * lobby.boardSize / 64; i++) {
+            let x = Math.max(Math.min(Math.floor(Math.random() * lobby.boardSize), lobby.boardSize), 0);
+            let y = Math.max(Math.min(Math.floor(Math.random() * lobby.boardSize), lobby.boardSize), 0);
+    
+            if (lobby.powerUps.find(value => value.x == x && value.y == y)) {
+                i -= 1;
+                break;
+            }
+    
+            lobby.powerUps.push({
+                x,
+                y,
+                skill: -1,
+                holder: -1,
+                timeActivated: -1,
+            });
+        }
         
         res.json({
             lobby
@@ -99,14 +136,25 @@ app.get("/lobby/reset", (req, res) => {
     }
 });
 
-app.get("/lobby/status", (req, res) => {
+app.get("/lobby/powerup", (req, res) => {
     let lobbyId = req.query.lobby;
     let lobby = lobbies[lobbyId];
+    let playerId = parseInt(req.query.player);
+    let px = parseInt(req.query.px);
+    let py = parseInt(req.query.py);
     if (lobby === undefined) {
         res.json({'error': "Lobby Doesn't Exist"});
     } else {
+        const p = lobby.powerUps.find(powerUp => powerUp.x == px && powerUp.y == py);
+
+        if (p && p.holder < 0) {
+            p.holder = playerId;
+            p.timeActivated = new Date().getTime();
+        }
+
         res.json({
-            lobby,
+            'message': 'success',
+            // lobby,
         });
     }
 });
@@ -155,6 +203,8 @@ app.get("/lobby/poll", (req, res) => {
     
         lobby.gravityAngle = lobby.gravityAngle * 4 / 5.0 + averageGravity / 5.0;
     }
+
+    lobby.powerUps = lobby.powerUps.filter(powerUp => powerUp.timeActivated < 0 || powerUp.timeActivated + 15000 >= new Date().getTime());
 
     res.json({
         timestamp: new Date().getTime(),

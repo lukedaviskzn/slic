@@ -334,8 +334,27 @@ function compileProgram(gl) {
 
     uniform vec3 colour;
     uniform int render_mode;
+    uniform float time;
 
     varying vec3 v_pos;
+
+    float f(float H, float S, float V, float n) {
+        float k = n + H/60.0;
+
+        for (int i = 0; i < 10; i++) {
+            if (k >= 6.0) {
+                k -= 6.0;
+            } else {
+                break;
+            }
+        }
+
+        return V - V*S*max(0.0, min(k, min(4.0-k, 1.0)));
+    }
+
+    vec3 hsvToRgb(float H, float S, float V) {
+        return vec3(f(H, S, V, 5.0), f(H, S, V, 3.0), f(H, S, V, 1.0));
+    }
 
     void main() {
         vec4 final = vec4(0.0);
@@ -349,6 +368,8 @@ function compileProgram(gl) {
             final = vec4(colour + d*vec3(1.0) - length(v_pos)*length(v_pos), 1.0);
         } else if (render_mode == 2) {
             final = vec4(colour * (v_pos.y + 10.0) / 10.5, 1.0);
+        } else if (render_mode == 3) {
+            final = vec4(hsvToRgb((sin(time/500.0)+1.0)*180.0, 1.0, 0.9), 1.0);
         }
         gl_FragColor = final;
     }
@@ -394,7 +415,7 @@ let dt = 0;
 
 let currentFrame = 0;
 
-/** @type {undefined | {id: string, status: 'waiting' | 'playing' | 'finished', gravityAngle: number, winner: number, boardSize: number, walls: [{t: boolean, l: boolean}], players: [{gravityAngle: number, x: number, y: number, vx: number, vy: number}]}} */
+/** @type {undefined | {id: string, status: 'waiting' | 'playing' | 'finished', gravityAngle: number, winner: number, boardSize: number, walls: [{t: boolean, l: boolean}], players: [{gravityAngle: number, x: number, y: number, vx: number, vy: number}], powerUps: [{x: number, y: number, skill: '0g', holder: number, timeActivated: number}]}} */
 let lobbyState;
 let latestLobbyTime = 0;
 
@@ -484,6 +505,9 @@ function drawObject(gl, r, g, b, renderMode, model) {
 
     loc = gl.getUniformLocation(program, "model");
     gl.uniformMatrix4fv(loc, false, model);
+
+    loc = gl.getUniformLocation(program, "time");
+    gl.uniform1f(loc, lastTime);
 
     gl.bindBuffer(gl.ARRAY_BUFFER, vertexBuffer);
     gl.drawArrays(gl.TRIANGLES, 0, 6);
@@ -578,8 +602,7 @@ function draw(time) {
 
     rot = rot*4/5 + lobbyState.gravityAngle/5;
 
-    const boardZRot = rot;
-    const boardRot = rotZ(boardZRot / (player !== null ? 10.0 : 1.0));
+    const boardRot = rotZ(player !== null ? (rot / 10.0) : rot);
 
     const board = matMul(translate(0, 0, -1.5), boardRot);
 
@@ -615,13 +638,52 @@ function draw(time) {
         }
     }
 
+    for (let i = 0; i < lobbyState.powerUps.length; i++) {
+        const powerUp = lobbyState.powerUps[i];
+
+        if (powerUp.holder !== -1) {
+            break;
+        }
+
+        const px = -0.5 + 0.5/size + powerUp.x/size;
+        const py = 0.5 - 0.5/size - powerUp.y/size;
+
+        const model = matMul(translate(px, py, 0.025), matMul(rotZ(time / 10.0), scale(0.5/size, 0.5/size)));
+
+        drawObject(gl, 1.0, 0.5, 0.5, 3, matMul(board, model));
+
+        if (player !== null && ball) {
+            let aabb = new AABB(new Vec2(px - 0.3/size, py - 0.3/size), new Vec2(px + 0.3/size, py + 0.3/size));
+            if (aabb.collideSphere(ball)) {
+                fetch("/lobby/powerup?" + new URLSearchParams({ lobby: lobbyId, player: player+"", px: powerUp.x+"", py: powerUp.y+"" })).then(data => {
+                    data.json().then(json => {
+                        if (json.error) {
+                            alert(json.error);
+                            lobbyState = undefined;
+                            return;
+                        }
+                    }).catch(err => {
+                        alert(err);
+                        lobbyState = undefined;
+                    });
+                }).catch(err => {
+                    alert(err);
+                    lobbyState = undefined;
+                });
+            }
+        }
+    }
+
     if (ball) {
         ball.radius = 0.25 / lobbyState.boardSize;
     }
 
     if (ball && lobbyState.status == 'playing') {
-        ballVel.x -= 1.0*dt*-Math.sin(rot);
-        ballVel.y -= 1.0*dt*Math.cos(rot);
+        let p = lobbyState.powerUps.find(powerUp => powerUp.holder === player && powerUp.skill === '0g');
+        if (!p) {
+            ballVel.x -= 1.0*dt*-Math.sin(rot);
+            ballVel.y -= 1.0*dt*Math.cos(rot);
+        }
     
         ballVel.x += acc.x * dt;
         ballVel.y += acc.y * dt;
