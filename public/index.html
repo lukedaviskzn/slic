@@ -4,7 +4,8 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Slic</title>
-    <script>
+    <link rel="stylesheet" href="css/index.css">
+    <link href="https://fonts.googleapis.com/css2?family=Archivo:ital,wght@0,100..900;1,100..900&family=Josefin+Sans:ital,wght@0,100..700;1,100..700&display=swap" rel="stylesheet">    <script>
         async function newLobby() {
             try {
                 let data = await fetch("/lobby/create");
@@ -17,7 +18,7 @@
 
         async function joinLobby() {
             try {
-                let t = document.getElementById("lobby")?.value.trim();
+                let t = document.getElementById("lobby")?.value.toUpperCase().trim();
                 if (t.length != 6) {
                     throw "Lobby ID must be 6 letters";
                 }
@@ -34,12 +35,12 @@
     </script>
 </head>
 <body>
-    <button onclick="javascript:newLobby()">New Lobby</button>
-    <br>
-    <br>
-    <label for="lobby">Lobby Id</label>
-    <input type="text" name="lobby" id="lobby">
-    <br>
-    <button onclick="javascript:joinLobby()">Join Lobby</button>
+    <h1>SLIC</h1>
+    <div class="panel">
+        <button onclick="javascript:newLobby()">NEW LOBBY</button>
+        <label for="lobby">Lobby ID:</label>
+        <input type="text" name="lobby" id="lobby" placeholder="XXXXXX" maxlength="6">
+        <button onclick="javascript:joinLobby()">JOIN LOBBY</button>
+    </div>
 </body>
 </html>

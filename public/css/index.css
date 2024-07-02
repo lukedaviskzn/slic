@@ -1,0 +1,95 @@
+/* background */
+/* gl.clearColor(30/255, 21/255, 42/255, 1.0); */
+
+/* backplate */
+/* drawObject(gl, 78/255, 103/255, 102/255, 0, board); */
+
+/* wall */
+/* drawObject(gl, 90/255, 177/255, 187/255, 2, matMul(board, wall)); */
+
+/* cap */
+/* drawObject(gl, 120/255, 241/255, 255/255, 0, matMul(board, matMul(wall, cap))); */
+
+@font-face {
+    font-family: 'agent_redregular';
+    src: url('fonts/agentred-webfont.woff2') format('woff2'),
+         url('fonts/agentred-webfont.woff') format('woff');
+    font-weight: normal;
+    font-style: normal;
+
+}
+
+h1 {
+    font-family: 'agent_redregular';
+    font-size: 5rem;
+    text-align: center;
+}
+
+body {
+    background-color: rgb(30, 21, 41);
+    color: white;
+}
+
+.panel {
+    margin-left: auto;
+    margin-right: auto;
+    max-width: 300px;
+    border-radius: 0.5rem;
+    padding: 1rem;
+    background-color: white;
+    color: black;
+    display: flex;
+    flex-direction: column;
+    row-gap: 1rem;
+    font-family: "Archivo", sans-serif;
+    text-align: center;
+}
+
+label {
+    margin-top: 1rem;
+    font-size: x-large;
+}
+
+input {
+    background-color: transparent;
+    color: black;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 50px;
+    border-radius: 0.5rem;
+    border-style: solid;
+    font-size: large;
+    font-optical-sizing: auto;
+    font-weight: 700;
+    font-style: bold;
+    border-width: 2px;
+    border-color: rgb(204, 204, 204);
+    text-align: center;
+    text-transform: uppercase;
+}
+
+button {
+    transition-duration: 0.3s;
+    background-color: rgb(51, 51, 51);
+    color: white;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 50px;
+    border-radius: 0.5rem;
+    border-style: none;
+    font-size: large;
+    box-shadow: 0px 5px 0px black;
+    font-optical-sizing: auto;
+    font-weight: 700;
+    font-style: bold;
+    cursor: pointer;
+}
+
+button:hover {
+    transition-duration: 0.3s;
+    box-shadow: 0px 0px 0px rgb(30, 117, 30);
+    background-color: rgb(44, 175, 44);
+    transform: translateY(5px);
+}
