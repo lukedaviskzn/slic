@@ -548,7 +548,7 @@ function draw(time) {
         }
     }
 
-    if (ball) {
+    if (ball && latestLobbyState.status == 'playing') {
         ballVel.x -= 1.0*dt*-Math.sin(rot);
         ballVel.y -= 1.0*dt*Math.cos(rot);
     
