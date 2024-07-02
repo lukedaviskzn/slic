@@ -481,9 +481,7 @@ function draw(time) {
         requestAnimationFrame(draw);
         return;
     }
-    if (!polling) {
-        poll();
-    }
+    poll();
     canvas.width = window.innerWidth;
     canvas.height = window.innerHeight;
 
@@ -647,17 +645,12 @@ function runCollisions(dt, until=undefined) {
     }
 }
 
-let polling = false;
-
 function poll() {
-    polling = true;
     let params = { lobby: lobby, bx: ball?.centre.x+"", by: ball?.centre.y+"", gravity: targetRot+"" };
     if (player !== null) {
         params.player = player;
     }
 
-    console.log(params);
-    
     fetch("/lobby/poll?" + new URLSearchParams(params)).then(data => {
         data.json().then(json => {
             if (json.error) {
@@ -665,7 +658,6 @@ function poll() {
                 return;
             }
             latestLobbyState = json;
-            polling = false;
         }).catch(err => alert(err));
     }).catch(err => alert(err));
 }
