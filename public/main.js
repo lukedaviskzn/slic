@@ -552,11 +552,6 @@ function runCollisions(until=(boardSize+1)*(boardSize+1)) {
             if (wall.collideSphere(ball)) {
                 // Citation: https://www.gamedev.net/forums/topic/544686-sphere-aabb-collision-repsonse/544686/
 
-                // Vector pbox = aabb.closestPoint(sphere.position);
-                // Vector delta = (sphere.position - pbox);
-                // float distance =  delta.length();
-                // if(distance < 0.000001f || distance > sphere.radius) return false;Vector normal = delta / distance; vector push = normal * (sphere.radius - distance);sphere.position += push;sphere.velocity -= normal * sphere.velocity.dotProduct(delta);
-
                 let pbox = wall.closestPoint(ball.centre);
 
                 let delta = pbox.sub(ball.centre);
@@ -572,9 +567,7 @@ function runCollisions(until=(boardSize+1)*(boardSize+1)) {
                 
                 ballVel = ballVel.add(proj.mul(-1.5));
 
-                if (isNaN(ball.centre.x)) {
-                    throw "err";
-                }
+                runCollisions(idx + 1);
             }
         }
         // there is a wall here
@@ -587,11 +580,6 @@ function runCollisions(until=(boardSize+1)*(boardSize+1)) {
             if (wall.collideSphere(ball)) {
                 // Citation: https://www.gamedev.net/forums/topic/544686-sphere-aabb-collision-repsonse/544686/
 
-                // Vector pbox = aabb.closestPoint(sphere.position);
-                // Vector delta = (sphere.position - pbox);
-                // float distance =  delta.length();
-                // if(distance < 0.000001f || distance > sphere.radius) return false;Vector normal = delta / distance; vector push = normal * (sphere.radius - distance);sphere.position += push;sphere.velocity -= normal * sphere.velocity.dotProduct(delta);
-
                 let pbox = wall.closestPoint(ball.centre);
 
                 let delta = pbox.sub(ball.centre);
@@ -607,9 +595,7 @@ function runCollisions(until=(boardSize+1)*(boardSize+1)) {
                 
                 ballVel = ballVel.add(proj.mul(-1.5));
 
-                if (isNaN(ball.centre.x)) {
-                    throw "err";
-                }
+                runCollisions(idx + 1);
             }
         }
     }
