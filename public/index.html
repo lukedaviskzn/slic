@@ -19,10 +19,11 @@
         async function joinLobby() {
             try {
                 let t = document.getElementById("lobby")?.value.toUpperCase().trim();
+                let name = document.getElementById("username")?.value;
                 if (t.length != 6) {
                     throw "Lobby ID must be 6 letters";
                 }
-                let data = await fetch("/lobby/join?" + new URLSearchParams({ lobby: t }));
+                let data = await fetch("/lobby/join?" + new URLSearchParams({ lobby: t, uname: name}));
                 let json = await data.json();
                 if (json.error) {
                     throw json.error;
@@ -40,6 +41,7 @@
         <button onclick="javascript:newLobby()">NEW LOBBY</button>
         <label for="lobby">Lobby ID:</label>
         <input type="text" name="lobby" id="lobby" placeholder="XXXXXX" maxlength="6">
+        <input type="text" name="username" id="username" placeholder="FUCKYOU" maxlength="12">
         <button onclick="javascript:joinLobby()">JOIN LOBBY</button>
     </div>
 </body>

@@ -29,6 +29,8 @@ app.get("/lobby/create", (req, res) => {
         boardSize: defaultBoardSize,
         walls: generateMaze(defaultBoardSize),
         players: [],
+        usernames: [],
+        scores: [],
     };
 
     for (let i = 0; i < lobby.boardSize; i++) {
@@ -41,8 +43,16 @@ app.get("/lobby/create", (req, res) => {
     res.json(lobby);
 });
 
+app.get("/leaderboard/incrementScore", (req, res) => {
+    let lobbyId = req.query.lobby;
+    let lobby = lobbies[lobbyId];
+    let playerId = lobby.winner;
+    lobby.scores[parseInt(playerId)] = lobby.scores[parseInt(playerId)] + 1;
+});
+
 app.get("/lobby/join", (req, res) => {
     let lobbyId = req.query.lobby;
+    let username = req.query.uname;
     let lobby = lobbies[lobbyId];
     if (lobby === undefined) {
         res.json({'error': "Lobby Doesn't Exist"});
@@ -56,6 +66,8 @@ app.get("/lobby/join", (req, res) => {
             vx: 0,
             vy: 0,
         });
+        lobby.usernames.push(username)
+        console.log(lobby.usernames)
         res.json({
             player: lobby.players.length-1,
             lobby: lobby,

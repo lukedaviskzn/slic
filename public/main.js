@@ -524,6 +524,18 @@ function draw(time) {
         let playerElem = document.getElementById("winPlayer");
         if (playerElem) {
             playerElem.innerText = ballColourNames[latestLobbyState.winner];
+
+            fetch("/lobby/poll?" + new URLSearchParams({lobby: latestLobbyState.id})).then(data => {
+                data.json().then(json => {
+                    if (json.error) {
+                        alert(json.error);
+                        return;
+                    }
+                    if (latestLobbyTime < json.timestamp) {
+                        latestLobbyState = json.lobby;
+                    }
+                }).catch(err => alert(err));
+            }).catch(err => alert(err));
         }
     } else {
         if (winElem) {
