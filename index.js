@@ -48,6 +48,7 @@ app.get("/leaderboard/incrementScore", (req, res) => {
     let lobby = lobbies[lobbyId];
     let playerId = lobby.winner;
     lobby.scores[parseInt(playerId)] = lobby.scores[parseInt(playerId)] + 1;
+    console.log(lobby.scores);
 });
 
 app.get("/lobby/join", (req, res) => {
