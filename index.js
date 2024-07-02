@@ -9,7 +9,7 @@ app.use(express.static('public'));
 const defaultBoardSize = 10;
 
 /**
- * @type {Object.<string, {id: string, status: 'waiting' | 'playing', gravityAngle: number, winner: number. boardSize: number, walls: [{t: boolean, l: boolean}], players: [{gravityAngle: number, x: number, y: number, vx: number, vy: number}]}>}
+ * @type {Object.<string, {id: string, status: 'waiting' | 'playing' | 'finished', gravityAngle: number, winner: number. boardSize: number, walls: [{t: boolean, l: boolean}], players: [{gravityAngle: number, x: number, y: number, vx: number, vy: number}]}>}
  */
 let lobbies = {};
 
@@ -121,7 +121,7 @@ app.get("/lobby/poll", (req, res) => {
 
         if (win && lobby.winner == -1) {
             lobby.winner = playerId;
-            lobby.status = 'waiting';
+            lobby.status = 'finished';
         }
     
         let averageGravity = 0.0;

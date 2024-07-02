@@ -394,7 +394,7 @@ let dt = 0;
 
 let currentFrame = 0;
 
-/** @type {undefined | {id: string, status: 'waiting' | 'playing', gravityAngle: number, boardSize: number, walls: [{t: boolean, l: boolean}], players: [{gravityAngle: number, x: number, y: number, vx: number, vy: number}]}} */
+/** @type {undefined | {id: string, status: 'waiting' | 'playing' | 'finished', gravityAngle: number, boardSize: number, walls: [{t: boolean, l: boolean}], players: [{gravityAngle: number, x: number, y: number, vx: number, vy: number}]}} */
 let latestLobbyState;
 let latestLobbyTime = 0;
 
@@ -462,6 +462,11 @@ function main() {
         const colour = ballColours[player];
         colourElem.style.color = "rgb("+colour[0]+", "+colour[1]+", "+colour[2]+")";
         colourElem.innerText = ballColourNames[player];
+
+        let colourDiv = document.getElementById("playerColour");
+        if (colourDiv) {
+            colourDiv.style.display = "block";
+        }
     }
 
     poll();
@@ -504,6 +509,11 @@ function draw(time) {
     
     if (currentFrame % 5 == 0) {
         poll();
+    }
+
+    if (player !== null && ball && latestLobbyState.status == "waiting") {
+        ball.centre.y = 0.5 - 0.05;
+        ball.centre.x = Math.round((player + 1) / (latestLobbyState.players.length + 1) * latestLobbyState.boardSize) / latestLobbyState.boardSize - 0.5 - 0.05;
     }
 
     currentFrame += 1;
