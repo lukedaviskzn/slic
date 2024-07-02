@@ -395,7 +395,7 @@ let dt = 0;
 let currentFrame = 0;
 
 /** @type {undefined | {id: string, status: 'waiting' | 'playing' | 'finished', gravityAngle: number, winner: number, boardSize: number, walls: [{t: boolean, l: boolean}], players: [{gravityAngle: number, x: number, y: number, vx: number, vy: number}]}} */
-let latestLobbyState;
+let lobbyState;
 let latestLobbyTime = 0;
 
 function main() {
@@ -434,7 +434,13 @@ function main() {
             const gx = a.x - b.x;
             const gy = a.y - b.y;
 
-            targetRot = targetRot*9/10 + (Math.atan2(gy, gx) - Math.PI/2) / 10;
+            let angle = Math.atan2(gy, gx);
+
+            if (angle < -Math.PI/2) {
+                angle += Math.PI*2;
+            }
+
+            targetRot = angle - Math.PI/2;
 
             acc.x = -b.x;
             acc.y = -b.y;
@@ -450,11 +456,6 @@ function main() {
     let lobbyElem = document.getElementById("lobby");
     if (lobbyElem) {
         lobbyElem.innerText = lobbyId+"";
-    }
-
-    let startElem = document.getElementById("startButton");
-    if (startElem && player === null) {
-        startElem.style.display = "flex";
     }
 
     let colourElem = document.getElementById("col");
@@ -500,7 +501,7 @@ function draw(time) {
     if (!canvas || !gl || !vertexBuffer || !program) {
         return;
     }
-    if (!latestLobbyState) {
+    if (!lobbyState) {
         requestAnimationFrame(draw);
         return;
     }
@@ -510,41 +511,84 @@ function draw(time) {
     }
     
     let winElem = document.getElementById("winScreen");
+    let leaderBoard = document.getElementById("leaderboard")
 
-    if (player !== null && ball && latestLobbyState.status == "waiting") {
-        ball.centre.y = 0.5 - 0.5 / latestLobbyState.boardSize;
-        ball.centre.x = Math.round((player + 1) / (latestLobbyState.players.length + 1) * latestLobbyState.boardSize) / latestLobbyState.boardSize - 0.5 - 0.5 / latestLobbyState.boardSize;
+    if (player !== null && ball && lobbyState.status == "waiting") {
+        ball.centre.y = 0.5 - 0.5 / lobbyState.boardSize;
+        ball.centre.x = Math.round((player + 1) / (lobbyState.players.length + 1) * lobbyState.boardSize) / lobbyState.boardSize - 0.5 - 0.5 / lobbyState.boardSize;
     }
-    if (latestLobbyState.status == "finished") {
+    if (lobbyState.status == "finished") {
         if (winElem) {
             winElem.style.display = "flex";
         }
         let playerElem = document.getElementById("winPlayer");
         if (playerElem) {
-            playerElem.innerText = ballColourNames[latestLobbyState.winner];
-
-            fetch("/leaderboard/incrementScore?" + new URLSearchParams({lobby: latestLobbyState.id})).then(data => {
-                data.json().then(json => {
-                    if (json.error) {
-                        alert(json.error);
-                        return;
-                    }
-                    if (latestLobbyTime < json.timestamp) {
-                        latestLobbyState = json.lobby;
-                    }
-                }).catch(err => alert(err));
-            }).catch(err => alert(err));
+            playerElem.innerText = ballColourNames[lobbyState.winner];
         }
+        if (leaderBoard){
+            leaderBoard.style.display = "flex";
+        }
+        let leaderBoard1 = document.getElementById("leaderboardEntry1");
+        let leaderBoard2 = document.getElementById("leaderboardEntry2");
+        let leaderBoard3 = document.getElementById("leaderboardEntry3");
+        let leaderBoard4 = document.getElementById("leaderboardEntry4");
+
+        // @ts-ignore
+        let scores = lobbyState.scores;
+        // Create an array of indices
+        let indices = scores.map((_, index) => index);
+        // Sort the indices array based on the values in the original array in descending order
+        indices.sort((a, b) => scores[b] - scores[a]);
+        
+        if (leaderBoard1) {
+            // @ts-ignore
+            leaderBoard1.innerText = lobbyState.usernames[indices[0]] + ":" +  scores[indices[0]]
+        }
+        if (leaderBoard2) {
+            // @ts-ignore
+            leaderBoard2.innerText = lobbyState.usernames[indices[1]] + ":" +  scores[indices[1]]
+        }
+        if (leaderBoard3) {
+            // @ts-ignore
+            leaderBoard3.innerText = lobbyState.usernames[indices[2]] + ":" + scores[indices[2]]
+        }
+        if (leaderBoard1) {
+            // @ts-ignore
+            leaderBoard1.innerText = lobbyState.usernames[indices[3]] + ":" +  scores[indices[3]]
+        }
+
     } else {
         if (winElem) {
             winElem.style.display = "none";
+        }
+
+        if(leaderBoard){
+            leaderBoard.style.display = "none";
+        }
+    }
+
+    let startElem = document.getElementById("startButton");
+    if (startElem && player === null) {
+        if (lobbyState?.status === 'waiting') {
+            startElem.style.display = "flex";
+        } else {
+            startElem.style.display = "none";
+        }
+    }
+
+    let resetElem = document.getElementById("resetButton");
+    if (resetElem && player === null) {
+        if (lobbyState?.status === 'finished') {
+            resetElem.style.display = "flex";
+        } else {
+            resetElem.style.display = "none";
         }
     }
 
     currentFrame += 1;
 
-    let width = window.innerWidth;
-    let height = window.innerHeight;
+    let width = window.innerWidth * window.devicePixelRatio;
+    let height = window.innerHeight * window.devicePixelRatio;
     
     canvas.width = width;
     canvas.height = height;
@@ -567,7 +611,7 @@ function draw(time) {
     gl.clearColor(30/255, 21/255, 42/255, 1.0);
     gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
 
-    rot = rot*4/5 + latestLobbyState.gravityAngle/5;
+    rot = rot*4/5 + lobbyState.gravityAngle/5;
 
     const boardZRot = rot;
     const boardRot = rotZ(boardZRot / (player !== null ? 10.0 : 1.0));
@@ -578,13 +622,13 @@ function draw(time) {
 
     const cap = matMul(translate(0.0, 0.5, 0.0), matMul(rotX(Math.PI/2), scale(1.0, 0.005, 1.0)));
 
-    let size = latestLobbyState.boardSize;
+    let size = lobbyState.boardSize;
 
     let wh = wallHeight / size;
 
     for (let i = 0; i < size+1; i++) {
         for (let j = 0; j < size+1; j++) {
-            if (i < size && latestLobbyState.walls[j+(size+1)*i].t) {
+            if (i < size && lobbyState.walls[j+(size+1)*i].t) {
                 const wall = matMul(translate(-0.5 + 0.5/size + i/size, 0.5 - j/size, wh/2), matMul(rotX(Math.PI/2), scale(1/size, wh, 1.0)));
                 
                 // wall
@@ -594,7 +638,7 @@ function draw(time) {
                 drawObject(gl, 120/255, 241/255, 255/255, 0, matMul(board, matMul(wall, cap)));
             }
 
-            if (j < size && latestLobbyState.walls[j+(size+1)*i].l) {
+            if (j < size && lobbyState.walls[j+(size+1)*i].l) {
                 const wall = matMul(translate(-0.5 + i/size, 0.5 - 0.5/size - j/size, wh/2), matMul(rotZ(Math.PI/2), matMul(rotX(Math.PI/2), scale(1/size, wh, 1.0))));
                 
                 // wall
@@ -606,7 +650,11 @@ function draw(time) {
         }
     }
 
-    if (ball && latestLobbyState.status == 'playing') {
+    if (ball) {
+        ball.radius = 0.25 / lobbyState.boardSize;
+    }
+
+    if (ball && lobbyState.status == 'playing') {
         ballVel.x -= 1.0*dt*-Math.sin(rot);
         ballVel.y -= 1.0*dt*Math.cos(rot);
     
@@ -615,35 +663,18 @@ function draw(time) {
         
         const numSteps = Math.ceil(ballVel.length() / 0.05);
         
-        if (lobbyElem) {
-            lobbyElem.innerText = Math.round(1/dt)+" "+numSteps;
-        }
-    
         for (let i = 0; i < numSteps; i++) {
             ball.centre.x += ballVel.x*dt / numSteps;
             ball.centre.y += ballVel.y*dt / numSteps;
 
-            if (ball.centre.x > 0.5) {
-                ball.centre.x = 0.5 - 0.5 / latestLobbyState.boardSize;
-                ballVel.x = 0;
-            }
-            if (ball.centre.x < -0.5) {
-                ball.centre.x = -0.5 - 0.5 / latestLobbyState.boardSize;
-                ballVel.x = 0;
-            }
-            if (ball.centre.y > 0.5) {
-                ball.centre.y = 0.5 - 0.5 / latestLobbyState.boardSize;
-                ballVel.y = 0;
-            }
-        
             runCollisions(dt / numSteps);
         }
     }
 
-    for (let i = 0; i < latestLobbyState.players.length; i++) {
-        const p = latestLobbyState.players[i];
+    for (let i = 0; i < lobbyState.players.length; i++) {
+        const p = lobbyState.players[i];
 
-        let br = 0.25 / latestLobbyState.boardSize;
+        let br = 0.25 / lobbyState.boardSize;
         let bx = (player === i && ball) ? ball.centre.x : p.x;
         let by = (player === i && ball) ? ball.centre.y : p.y;
 
@@ -653,7 +684,7 @@ function draw(time) {
         const colour = ballColours[i];
         drawObject(gl, colour[0]/255, colour[1]/255, colour[2]/255, 1, ballModel);
 
-        if (latestLobbyState.status === 'playing') {
+        if (lobbyState.status === 'playing') {
             p.x += p.vx * dt;
             p.y += p.vy * dt;
             p.vx *= 0.8;
@@ -672,9 +703,9 @@ const extendBox = 0.25;
  * @returns 
  */
 function runCollisions(dt, until=undefined) {
-    if (!ball || !latestLobbyState) return;
+    if (!ball || !lobbyState) return;
 
-    let size = latestLobbyState.boardSize;
+    let size = lobbyState.boardSize;
 
     if (until === undefined) {
         until = (size+1)*(size+1);
@@ -683,13 +714,11 @@ function runCollisions(dt, until=undefined) {
     let bx = Math.round((ball.centre.x + 0.5) * size);
     let by = Math.round(-(ball.centre.y - 0.5) * size);
 
-    console.log(bx, by);
-
-    for (let i = Math.max(bx - 2, 0); i < Math.min(bx + 2, size); i++) {
-        for (let j = Math.max(by - 2, 0); j < Math.min(by + 2, size); j++) {
+    for (let i = Math.max(bx - 2, 0); i < Math.min(bx + 2, size+1); i++) {
+        for (let j = Math.max(by - 2, 0); j < Math.min(by + 2, size+1); j++) {
             let idx = j + i*(size+1);
             // there is a wall here
-            if (i < size && latestLobbyState.walls[idx].t) {
+            if (i < size && lobbyState.walls[idx].t) {
                 let extend = extendBox / size;
                 const wallLeft = -0.5 + (i - extend)/size;
                 const wallY = 0.5 - j/size;
@@ -711,12 +740,10 @@ function runCollisions(dt, until=undefined) {
                     ball.centre = ball.centre.add(push.mul(0.5));
     
                     ballVel = ballVel.add(push.mul(0.02/dt));
-
-                    console.log("Collided")
                 }
             }
             // there is a wall here
-            if (j < size && latestLobbyState.walls[idx].l) {
+            if (j < size && lobbyState.walls[idx].l) {
                 const wallX = -0.5 + i/size;
                 const wallBottom = 0.5 - (j+1)/size;
                 
@@ -752,7 +779,7 @@ function poll() {
         params.vx = ballVel.x+"";
         params.vy = ballVel.y+"";
         params.gravity = targetRot+"";
-        if (ball.centre.y < -0.6) {
+        if (ball.centre.y < -0.53) {
             params.win = "";
         }
     }
@@ -761,13 +788,20 @@ function poll() {
         data.json().then(json => {
             if (json.error) {
                 alert(json.error);
+                lobbyState = undefined;
                 return;
             }
             if (latestLobbyTime < json.timestamp) {
-                latestLobbyState = json.lobby;
+                lobbyState = json.lobby;
             }
-        }).catch(err => alert(err));
-    }).catch(err => alert(err));
+        }).catch(err => {
+            alert(err);
+            lobbyState = undefined;
+        });
+    }).catch(err => {
+        alert(err);
+        lobbyState = undefined;
+    });
 }
 
 try {

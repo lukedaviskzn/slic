@@ -6,7 +6,7 @@
     <title>Slic</title>
     <link rel="stylesheet" href="css/play.css">
     <link href="https://fonts.googleapis.com/css2?family=Archivo:ital,wght@0,100..900;1,100..900&family=Josefin+Sans:ital,wght@0,100..700;1,100..700&display=swap" rel="stylesheet">
-    <script src="main.js" type="module"></script>
+    <script src="main.js" type="module"></script> 
     <script>
         async function start() {
             try {
@@ -21,10 +21,24 @@
                 alert(err);
             }
         }
-    </script>
+        
+        async function reset() {
+            try {
+                const urlParams = new URLSearchParams(window.location.search);
+                const lobby = urlParams.get('lobby') ?? "";
+                let data = await fetch("/lobby/reset?" + new URLSearchParams({ lobby: lobby }));
+                let json = await data.json();
+                if (json.error) {
+                    throw json.error;
+                }
+            } catch (err) {
+                alert(err);
+            }
+        }
+    </script> 
 </head>
 <body>
-    <canvas id="canvas" width="800" height="600"></canvas>
+    <canvas style="width: 100%; height: 100%;" id="canvas" width="800" height="600"></canvas>
     <div id="lobbyPanel">
         <div>
             <span>Lobby ID: </span><span id="lobby"></span>
@@ -34,11 +48,22 @@
             <span id="col">Red</span>
         </div>
         <button id="startButton" onclick="javascript:start()">START</button>
+        <button id="resetButton" onclick="javascript:reset()">RESET</button>
     </div>
     <div id="winScreen">
         <div class="panel">
             <span id="winPlayer">RED</span> <span>WINS!</span>
+            
         </div>
     </div>
+    <div id = leaderboard>
+        <div class="lbpanel">
+            <span id="leaderboardEntry1"> Cade: 2 </span>
+            <span id="leaderboardEntry2"> Luke: 3 </span>
+            <span id="leaderboardEntry3"> Simon: 1 </span>
+            <span id="leaderboardEntry4"> Cade: 4 </span>
+        </div>
+    </div>
+
 </body>
 </html>
