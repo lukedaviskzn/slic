@@ -433,7 +433,7 @@ function main() {
     }
 
     if (player !== null) {
-        ball = new Sphere(new Vec2(0, 0), 0.025);
+        ball = new Sphere(new Vec2(-0.05, 0.4), 0.025);
     }
 
     poll();
@@ -589,7 +589,9 @@ function runCollisions(dt, until=undefined) {
     }
 
     let bx = Math.round((ball.centre.x + 0.5) * size);
-    let by = Math.round((ball.centre.y + 0.5) * size);
+    let by = Math.round(-(ball.centre.y - 0.5) * size);
+
+    console.log(bx, by);
 
     for (let i = Math.max(bx - 2, 0); i < Math.min(bx + 2, size); i++) {
         for (let j = Math.max(by - 2, 0); j < Math.min(by + 2, size); j++) {
@@ -616,6 +618,8 @@ function runCollisions(dt, until=undefined) {
                     ball.centre = ball.centre.add(push.mul(0.1));
     
                     ballVel = ballVel.add(push.mul(0.1/dt));
+
+                    console.log("Collided")
                 }
             }
             // there is a wall here
