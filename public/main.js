@@ -101,7 +101,7 @@ class AABB {
      * @returns {boolean}
      */
     collideSphere(sphere) {
-        let sqrDist = this.squareDistPoint(sphere.centre);
+        const sqrDist = this.squareDistPoint(sphere.centre);
         return sqrDist <= sphere.radius*sphere.radius;
     }
 
@@ -142,8 +142,8 @@ class Sphere {
     }
 }
 
-let boardSize = 10;
-let wall_height = 0.1;
+const boardSize = 10;
+const wall_height = 0.1;
 /**
  * @type {{t: boolean, l: boolean}[]}
  */
@@ -152,8 +152,8 @@ let walls = [];
 for (let i = 0; i < boardSize + 1; i++) {
     for (let j = 0; j < boardSize + 1; j++) {
         walls.push({
-            t: Math.random() > 0.5,
-            l: Math.random() > 0.5,
+            t: j == 0 || Math.random() > 0.5,
+            l: i == 0 || i == boardSize || Math.random() > 0.5,
         });
     }
 }
@@ -289,7 +289,7 @@ function rotZ(angle) {
     ]);
 }
 
-let statusElem = document.getElementById("status");
+const statusElem = document.getElementById("status");
 if (!statusElem) throw "Status element missing.";
 
 /**
@@ -299,7 +299,7 @@ function compileProgram(gl) {
     program = gl.createProgram();
     if (!program) { throw "Failed to create program."; }
 
-    let vertexShader = gl.createShader(gl.VERTEX_SHADER);
+    const vertexShader = gl.createShader(gl.VERTEX_SHADER);
     if (!vertexShader) { throw "Failed to create vertex shader."; }
     
     gl.shaderSource(vertexShader, `
@@ -325,7 +325,7 @@ function compileProgram(gl) {
         throw "Failed to compile vertex shader.";
     }
 
-    let fragShader = gl.createShader(gl.FRAGMENT_SHADER);
+    const fragShader = gl.createShader(gl.FRAGMENT_SHADER);
     if (!fragShader) { throw "Failed to create fragment shader."; }
     
     gl.shaderSource(fragShader, `
@@ -416,17 +416,20 @@ function main() {
         //     rot = event.beta;
         // }, false);
         window.addEventListener('devicemotion', (event) => {
-            let a = event.accelerationIncludingGravity
-            let b = event.acceleration;
+            const a = event.accelerationIncludingGravity
+            const b = event.acceleration;
 
             if (!a?.x || !b?.x || !a?.y || !b?.y || !a?.z || !b?.z || !statusElem) return;
 
-            let gx = a.x - b.x;
-            let gy = a.y - b.y;
+            const gx = a.x - b.x;
+            const gy = a.y - b.y;
 
             statusElem.innerText = (Math.round(Math.atan2(gy, gx)*100.0)/100.0) + "";
 
             rot = rot*9/10 + (Math.atan2(gy, gx) - Math.PI/2) / 10;
+
+            ballVel.x -= b.x * dt;
+            ballVel.y -= b.y * dt;
         }, false);
     } else {
         throw "Doesn't support device orientation.";
@@ -438,10 +441,11 @@ function main() {
 let lastWidth;
 let lastHeight;
 
-let ball = new Sphere(new Vec2(-0.023, 0.6), 0.025);
+let ball = new Sphere(new Vec2(-0.05, 0.05), 0.025);
 let ballVel = new Vec2(0, 0);
 
 let lastTime;
+let dt = 0;
 
 function drawObject(gl, r, g, b, renderMode, model) {
     let loc = gl.getUniformLocation(program, "colour");
@@ -463,7 +467,7 @@ function drawObject(gl, r, g, b, renderMode, model) {
 function draw(time) {
     if (!lastTime) lastTime = time;
     
-    let dt = (time - lastTime) / 1000.0;
+    dt = (time - lastTime) / 1000.0;
     lastTime = time;
 
     if (!canvas || !gl || !vertexBuffer || !program) return;
@@ -488,20 +492,19 @@ function draw(time) {
     gl.clearColor(30/255, 21/255, 42/255, 1.0);
     gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
 
-    // let boardZRot = -0.1;
-    let boardZRot = rot;
-    let boardRot = rotZ(boardZRot / 10.0);
+    const boardZRot = rot;
+    const boardRot = rotZ(boardZRot / 10.0);
 
-    let board = matMul(translate(0, 0, -1.5), boardRot);
+    const board = matMul(translate(0, 0, -1.5), boardRot);
 
     drawObject(gl, 78/255, 103/255, 102/255, 0, board);
 
-    let cap = matMul(translate(0.0, 0.5, 0.0), matMul(rotX(Math.PI/2), scale(1.0, 0.005, 1.0)));
+    const cap = matMul(translate(0.0, 0.5, 0.0), matMul(rotX(Math.PI/2), scale(1.0, 0.005, 1.0)));
 
     for (let i = 0; i < boardSize+1; i++) {
         for (let j = 0; j < boardSize+1; j++) {
-            if (i < boardSize && walls[j+boardSize*i].t) {
-                let wall = matMul(translate(-0.5 + 0.5/boardSize + i/boardSize, 0.5 - j/boardSize, wall_height/2), matMul(rotX(Math.PI/2), scale(1/boardSize, wall_height, 1.0)));
+            if (i < boardSize && walls[j+(boardSize+1)*i].t) {
+                const wall = matMul(translate(-0.5 + 0.5/boardSize + i/boardSize, 0.5 - j/boardSize, wall_height/2), matMul(rotX(Math.PI/2), scale(1/boardSize, wall_height, 1.0)));
                 
                 // wall
                 drawObject(gl, 90/255, 177/255, 187/255, 2, matMul(board, wall));
@@ -510,8 +513,8 @@ function draw(time) {
                 drawObject(gl, 120/255, 241/255, 255/255, 0, matMul(board, matMul(wall, cap)));
             }
 
-            if (j < boardSize && walls[j+boardSize*i].l) {
-                let wall = matMul(translate(-0.5 + i/boardSize, 0.5 - 0.5/boardSize - j/boardSize, wall_height/2), matMul(rotZ(Math.PI/2), matMul(rotX(Math.PI/2), scale(1/boardSize, wall_height, 1.0))));
+            if (j < boardSize && walls[j+(boardSize+1)*i].l) {
+                const wall = matMul(translate(-0.5 + i/boardSize, 0.5 - 0.5/boardSize - j/boardSize, wall_height/2), matMul(rotZ(Math.PI/2), matMul(rotX(Math.PI/2), scale(1/boardSize, wall_height, 1.0))));
                 
                 // wall
                 drawObject(gl, 90/255, 177/255, 187/255, 2, matMul(board, wall));
@@ -524,13 +527,18 @@ function draw(time) {
 
     ballVel.x -= 1.0*dt*-Math.sin(boardZRot);
     ballVel.y -= 1.0*dt*Math.cos(boardZRot);
+
+    const numSteps = Math.ceil(ballVel.length() / 0.05);
+    console.log(numSteps);
+
+    for (let i = 0; i < numSteps; i++) {
+        ball.centre.x += ballVel.x*dt / numSteps;
+        ball.centre.y += ballVel.y*dt / numSteps;
     
-    ball.centre.x += ballVel.x*dt;
-    ball.centre.y += ballVel.y*dt;
+        runCollisions(dt / numSteps);
+    }
 
-    runCollisions();
-
-    let ballModel = matMul(translate(0,0,-1.5), matMul(boardRot, matMul(translate(ball.centre.x, ball.centre.y, 0.05), scale(ball.radius*2))));
+    const ballModel = matMul(translate(0,0,-1.5), matMul(boardRot, matMul(translate(ball.centre.x, ball.centre.y, 0.05), scale(ball.radius*2))));
 
     // ball
     drawObject(gl, 0/255, 230/255, 23/255, 1, ballModel);
@@ -538,60 +546,58 @@ function draw(time) {
     requestAnimationFrame(draw);
 }
 
-function runCollisions(until=(boardSize+1)*(boardSize+1)) {
+const extendBox = 0.025;
+
+function runCollisions(dt, until=(boardSize+1)*(boardSize+1)) {
     for (let idx = 0; idx < until; idx++) {
-        let i = Math.floor(idx/boardSize);
-        let j = idx % boardSize;
+        const i = Math.floor(idx/(boardSize+1));
+        const j = idx % (boardSize+1);
         // there is a wall here
         if (i < boardSize && walls[idx].t) {
-            let wallLeft = -0.5 + i/boardSize;
-            let wallY = 0.5 - j/boardSize;
+            const wallLeft = -0.5 + (i - extendBox)/boardSize;
+            const wallY = 0.5 - j/boardSize;
 
-            let wall = new AABB(new Vec2(wallLeft, wallY-0.05/boardSize), new Vec2(wallLeft+1/boardSize, wallY+0.05/boardSize));
+            const wall = new AABB(new Vec2(wallLeft, wallY-extendBox/boardSize), new Vec2(wallLeft+(1+extendBox*2)/boardSize, wallY+extendBox/boardSize));
 
             if (wall.collideSphere(ball)) {
                 // Citation: https://www.gamedev.net/forums/topic/544686-sphere-aabb-collision-repsonse/544686/
 
-                let pbox = wall.closestPoint(ball.centre);
+                const pbox = wall.closestPoint(ball.centre);
 
                 let delta = pbox.sub(ball.centre);
                 delta = delta.mul(ball.radius / (delta.length()+0.0001));
 
                 let psphere = ball.centre.add(delta);
                 
-                let push = pbox.sub(psphere);
+                const push = pbox.sub(psphere);
 
-                ball.centre = ball.centre.add(push.mul(1.01));
+                ball.centre = ball.centre.add(push.mul(0.1));
 
-                let proj = ballVel.project(push.div(push.length()));
-                
-                ballVel = ballVel.add(proj.mul(-1.5));
+                ballVel = ballVel.add(push.mul(0.1/dt));
             }
         }
         // there is a wall here
         if (j < boardSize && walls[idx].l) {
-            let wallX = -0.5 + i/boardSize;
-            let wallBottom = 0.5 - (j+1)/boardSize;
+            const wallX = -0.5 + i/boardSize;
+            const wallBottom = 0.5 - (j+1)/boardSize;
             
-            let wall = new AABB(new Vec2(wallX-0.05/boardSize, wallBottom), new Vec2(wallX+0.05/boardSize, wallBottom+1/boardSize));
+            const wall = new AABB(new Vec2(wallX-0.05/boardSize, wallBottom), new Vec2(wallX+0.05/boardSize, wallBottom+1/boardSize));
 
             if (wall.collideSphere(ball)) {
                 // Citation: https://www.gamedev.net/forums/topic/544686-sphere-aabb-collision-repsonse/544686/
 
-                let pbox = wall.closestPoint(ball.centre);
+                const pbox = wall.closestPoint(ball.centre);
 
                 let delta = pbox.sub(ball.centre);
                 delta = delta.mul(ball.radius / (delta.length()+0.0001));
 
-                let psphere = ball.centre.add(delta);
+                const psphere = ball.centre.add(delta);
                 
-                let push = pbox.sub(psphere);
+                const push = pbox.sub(psphere);
 
-                ball.centre = ball.centre.add(push.mul(1.01));
+                ball.centre = ball.centre.add(push.mul(0.1));
 
-                let proj = ballVel.project(push.div(push.length()));
-                
-                ballVel = ballVel.add(proj.mul(-1.5));
+                ballVel = ballVel.add(push.mul(0.1/dt));
             }
         }
     }
