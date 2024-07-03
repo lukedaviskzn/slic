@@ -429,7 +429,7 @@ let currentFrame = 0;
  * }} */
 let lobbyState;
 let latestLobbyTime = 0;
-
+let gameWon = false;
 function main() {
     canvas = /**@type {HTMLCanvasElement | null}*/(document.getElementById("canvas"));
     gl = canvas?.getContext("webgl");
@@ -553,20 +553,17 @@ function draw(time) {
     }
 
     if (player && ball && lobbyState.status == "waiting") {
+        gameWon = false;
         let index = Object.keys(lobbyState.players).findIndex(p => p === player);
         ball.centre.y = 0.5 - 0.5 / lobbyState.boardSize;
         ball.centre.x = Math.round((index + 1) / (Object.keys(lobbyState.players).length + 1) * lobbyState.boardSize) / lobbyState.boardSize - 0.5 - 0.5 / lobbyState.boardSize;
     }
-    if (lobbyState.status == "finished") {
+    if (lobbyState.status == "finished" && !gameWon) {
+        gameWon = true;
         if (winElem) {
             winElem.style.display = "flex";
         }
         let playerElem = document.getElementById("winPlayer");
-
-        let leaderBoard1  = document.getElementById("playerScore1")
-        let leaderBoard2  = document.getElementById("playerScore1")
-        let leaderBoard3  = document.getElementById("playerScore1")
-        let leaderBoard4  = document.getElementById("playerScore1")
 
         let players = lobbyState.players;
         // @ts-ignore
