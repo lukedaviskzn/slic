@@ -14,10 +14,13 @@ const defaultBoardSize = 16;
  *      status: 'waiting' | 'playing' | 'finished',
  *      gravityAngle: number,
  *      winner: string,
+ *      
  *      boardSize: number,
  *      walls: [{t: boolean, l: boolean}],
  *      players: Object.<string, {
  *          playerId: string,
+ *          username: string,
+ *          score: number,
  *          gravityAngle: number,
  *          x: number, y: number,
  *          vx: number, vy: number,
@@ -78,6 +81,8 @@ app.get("/lobby/create", (req, res) => {
 
 app.get("/lobby/join", (req, res) => {
     let lobbyId = req.query.lobby;
+    let username_ = req.query.username; // Add to the client
+
     let lobby = lobbies[lobbyId];
     if (lobby === undefined) {
         res.json({'error': "Lobby doesn't exist."});
@@ -87,11 +92,14 @@ app.get("/lobby/join", (req, res) => {
         let playerId = Math.round(Math.random()*1.0e9)+"";
         lobby.players[playerId] = {
             playerId: playerId,
+            username: username_,
+            score: 0,
             gravityAngle: 0,
             x: 0,
             y: 0,
             vx: 0,
             vy: 0,
+
             lastPoll: new Date().getTime() + 10000,
         };
         res.json({
@@ -214,6 +222,8 @@ app.get("/lobby/poll", (req, res) => {
         if (lobby.status === 'playing' && win && !lobby.winner) {
             lobby.winner = playerId;
             lobby.status = 'finished';
+            lobby.players[playerId].score += 1;
+            console.log("Increased " + lobby.players[playerId].username + "score to" + lobby.players[playerId].score) 
         }
     
         let averageGravity = 0.0;

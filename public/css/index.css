@@ -45,11 +45,6 @@ body {
     text-align: center;
 }
 
-label {
-    margin-top: 1rem;
-    font-size: x-large;
-}
-
 input {
     background-color: transparent;
     color: black;
