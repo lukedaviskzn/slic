@@ -710,7 +710,7 @@ function draw(time) {
 
         drawObject(gl, 1.0, 0.5, 0.5, 3, matMul(board, model));
 
-        if (player && ball) {
+        if (player && ball && lobbyState.status === 'playing') {
             let aabb = new AABB(new Vec2(px - 0.3/size, py - 0.3/size), new Vec2(px + 0.3/size, py + 0.3/size));
             if (aabb.collideSphere(ball)) {
                 fetch("/lobby/powerup?" + new URLSearchParams({ lobby: lobbyId, player: player+"", px: powerUp.x+"", py: powerUp.y+"" })).then(data => {
