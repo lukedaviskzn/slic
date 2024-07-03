@@ -473,6 +473,7 @@ function main() {
             }
 
             targetRot = targetRot*2/3 + (angle - Math.PI/2)/3;
+            // targetRot = angle - Math.PI/2;
 
             acc.x = -b.x * Math.cos(rot - targetRot) + b.y * Math.sin(rot - targetRot);
             acc.y = -b.x * Math.sin(rot - targetRot) - b.y * Math.cos(rot - targetRot);
