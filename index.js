@@ -191,6 +191,7 @@ app.get("/lobby/powerup", (req, res) => {
 app.get("/lobby/poll", (req, res) => {
     const lobbyId = req.query.lobby;
     const playerId = /** @type {string | undefined} */(req.query.player);
+    const timestamp = parseInt(req.query.timestamp);
     const gravity = playerId ? parseFloat(req.query.gravity) : 0.0;
     const bx = playerId ? parseFloat(req.query.bx) : 0.0;
     const by = playerId ? parseFloat(req.query.by) : 0.0;
@@ -212,13 +213,13 @@ app.get("/lobby/poll", (req, res) => {
 
     const time = new Date().getTime();
 
-    if (playerId) {
+    if (playerId && timestamp > lobby.players[playerId].lastPoll) {
         lobby.players[playerId].gravityAngle = gravity;
         lobby.players[playerId].x = bx;
         lobby.players[playerId].y = by;
         lobby.players[playerId].vx = vx;
         lobby.players[playerId].vy = vy;
-        lobby.players[playerId].lastPoll = time;
+        lobby.players[playerId].lastPoll = timestamp;
 
         if (lobby.status === 'playing' && win && !lobby.winner) {
             lobby.winner = playerId;

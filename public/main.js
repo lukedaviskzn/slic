@@ -889,7 +889,7 @@ function runCollisions(dt, until=undefined) {
 }
 
 function poll() {
-    let params = { lobby: lobbyId };
+    let params = { lobby: lobbyId, timestamp: new Date().getTime()+"" };
     if (player && ball) {
         params.player = player;
         params.bx = ball.centre.x+"";
