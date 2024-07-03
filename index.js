@@ -6,7 +6,7 @@ const port = 3030;
 
 app.use(express.static('public'));
 
-const defaultBoardSize = 16;
+const defaultBoardSize = 3;
 
 /**
  * @type {Object.<string, {
@@ -222,8 +222,8 @@ app.get("/lobby/poll", (req, res) => {
         if (lobby.status === 'playing' && win && !lobby.winner) {
             lobby.winner = playerId;
             lobby.status = 'finished';
-            lobby.players[winner].score += 1;
-            console.log("Increased " + lobby.players[winner].username + "score to" + lobby.players[winner].score) 
+            lobby.players[playerId].score += 1;
+            console.log("Increased " + lobby.players[playerId].username + "score to" + lobby.players[playerId].score) 
         }
     
         let averageGravity = 0.0;

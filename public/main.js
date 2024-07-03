@@ -573,7 +573,8 @@ function draw(time) {
 
     let startElem = document.getElementById("startButton");
     if (startElem && player === null) {
-        if (lobbyState?.status === 'waiting') {
+        // @ts-ignore
+        if (lobbyState?.status === 'waiting' && lobbyState?.players.length>0) {
             startElem.style.display = "flex";
         } else {
             startElem.style.display = "none";
