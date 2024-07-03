@@ -561,6 +561,33 @@ function draw(time) {
             winElem.style.display = "flex";
         }
         let playerElem = document.getElementById("winPlayer");
+
+        let leaderBoard1  = document.getElementById("playerScore1")
+        let leaderBoard2  = document.getElementById("playerScore1")
+        let leaderBoard3  = document.getElementById("playerScore1")
+        let leaderBoard4  = document.getElementById("playerScore1")
+
+        let players = lobbyState.players;
+        // @ts-ignore
+        let playerTuples = Object.keys(players).map(playerid => [playerid, players[playerid].score]);
+        playerTuples.sort((a, b) => b[1] - a[1]);
+        if(leaderBoard1){
+            leaderBoard1.getElementsByClassName("playerName")[0].innerHTML = playerTuples[0][0]
+            leaderBoard1.getElementsByClassName("playerScore")[0].innerHTML = playerTuples[0][1]
+        }
+        if(leaderBoard2){
+            leaderBoard2.getElementsByClassName("playerName")[0].innerHTML = playerTuples[1][0]
+            leaderBoard2.getElementsByClassName("playerScore")[0].innerHTML = playerTuples[1][1]
+        }
+        if(leaderBoard3){
+            leaderBoard3.getElementsByClassName("playerName")[0].innerHTML = playerTuples[2][0]
+            leaderBoard3.getElementsByClassName("playerScore")[0].innerHTML = playerTuples[2][1]
+        }
+        if(leaderBoard4){
+            leaderBoard4.getElementsByClassName("playerName")[0].innerHTML = playerTuples[3][0]
+            leaderBoard4.getElementsByClassName("playerScore")[0].innerHTML = playerTuples[3][1]
+        }
+
         if (playerElem) {
             let i = Object.keys(lobbyState.players).findIndex(p => p === lobbyState?.winner);
             playerElem.innerText = ballColourNames[i];
