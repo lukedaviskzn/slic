@@ -25,6 +25,7 @@ const defaultBoardSize = 16;
  *          x: number, y: number,
  *          vx: number, vy: number,
  *          lastPoll: number,
+ *          score: number,
  *      }>,
  *      powerUps: [{x: number, y: number, skill: '0g', holder: string, timeActivated: number}]
  * }>}
@@ -223,7 +224,6 @@ app.get("/lobby/poll", (req, res) => {
             lobby.winner = playerId;
             lobby.status = 'finished';
             lobby.players[playerId].score += 1;
-            console.log("Increased " + lobby.players[playerId].username + "score to" + lobby.players[playerId].score) 
         }
     
         let averageGravity = 0.0;

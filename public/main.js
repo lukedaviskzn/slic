@@ -420,10 +420,12 @@ let currentFrame = 0;
  *      walls: [{t: boolean, l: boolean}],
  *      players: Object.<string, {
  *          playerId: string,
+ *          username: string,
  *          gravityAngle: number,
  *          x: number, y: number,
  *          vx: number, vy: number,
  *          lastPoll: number,
+ *          score: number,
  *      }>,
  *      powerUps: [{x: number, y: number, skill: '0g', holder: string, timeActivated: number}]
  * }} */
@@ -472,7 +474,7 @@ function main() {
                 angle += Math.PI*2;
             }
 
-            targetRot = targetRot*2/3 + (angle - Math.PI/2)/3;
+            targetRot = targetRot*4/5 + (angle - Math.PI/2)/5;
             // targetRot = angle - Math.PI/2;
 
             acc.x = -b.x * Math.cos(rot - targetRot) + b.y * Math.sin(rot - targetRot);
@@ -520,6 +522,8 @@ let lobbyElem = document.getElementById("lobby");
 let colourElem = document.getElementById("col");
 let winElem = document.getElementById("winScreen");
 
+let lastStatus = 'waiting';
+
 /**
  * @param {DOMHighResTimeStamp} time
  */
@@ -559,44 +563,44 @@ function draw(time) {
         ball.centre.y = 0.5 - 0.5 / lobbyState.boardSize;
         ball.centre.x = Math.round((index + 1) / (Object.keys(lobbyState.players).length + 1) * lobbyState.boardSize) / lobbyState.boardSize - 0.5 - 0.5 / lobbyState.boardSize;
     }
-    if (lobbyState.status == "finished") {
-        if (winElem) {
+    if (lobbyState.status === 'finished') {
+        if (winElem && lastStatus !== 'finished') {
             winElem.style.display = "flex";
-        }
-        let playerElem = document.getElementById("winPlayer");
-
-        let leaderBoard1  = document.getElementById("playerScore1")
-        let leaderBoard2  = document.getElementById("playerScore1")
-        let leaderBoard3  = document.getElementById("playerScore1")
-        let leaderBoard4  = document.getElementById("playerScore1")
-
-        let players = lobbyState.players;
-        // @ts-ignore
-        let playerTuples = Object.keys(players).map(playerid => [playerid, players[playerid].score]);
-        playerTuples.sort((a, b) => b[1] - a[1]);
-
-        for(let i = 0; i < 4; i++) {
-            let leaderBoard1  = document.getElementById("playerScore"+(i+1))
-            if(i < Object.keys(players).length) {
-                if(leaderBoard1){
-                    leaderBoard1.style.display = "flex";
+            let playerElem = document.getElementById("winPlayer");
+    
+            let players = lobbyState.players;
+    
+            let playerTuples = Object.keys(players).map(playerId => {
+                return {
+                    player: playerId,
+                    score: players[playerId].score,
+                }
+            });
+            playerTuples.sort((a, b) => b.score - a.score);
+    
+            for(let i = 0; i < 4; i++) {
+                let leaderBoard  = document.getElementById("playerScore"+(i+1))
+                if (leaderBoard) {
+                    if (i < Object.keys(players).length) {
+                        leaderBoard.style.display = "flex";
+                        leaderBoard.getElementsByClassName("playerName")[0].innerHTML = players[playerTuples[i].player].username;
+                        leaderBoard.getElementsByClassName("playerScore")[0].innerHTML = playerTuples[i].score+""
+                    } else {
+                        leaderBoard.style.display = "none";
+                    }
+                }
+            }
+    
+            if (playerElem) {
+                let i = Object.keys(lobbyState.players).findIndex(p => p === lobbyState?.winner);
+                if(players[lobbyState.winner]){
                     // @ts-ignore
-                    leaderBoard1.getElementsByClassName("playerName")[0].innerHTML = players[playerTuples[i][0]].username;
-                    leaderBoard1.getElementsByClassName("playerScore")[0].innerHTML = playerTuples[i][1]
-                }
-            } else {
-                if(leaderBoard1){
-                    leaderBoard1.style.display = "none";
+                    playerElem.innerText = players[lobbyState.winner].username;
                 }
             }
-        }
-
-        if (playerElem) {
-            let i = Object.keys(lobbyState.players).findIndex(p => p === lobbyState?.winner);
-            if(players[lobbyState.winner]){
-                // @ts-ignore
-                playerElem.innerText = players[lobbyState.winner].username;
-            }
+    
+            let audio = new Audio('/victory.mp3');
+            audio.play();
         }
     } else {
         if (winElem) {
@@ -784,6 +788,8 @@ function draw(time) {
             p.vy *= 0.8;
         }
     }
+
+    lastStatus = lobbyState.status;
 
     requestAnimationFrame(draw);
 }
