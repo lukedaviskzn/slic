@@ -6,7 +6,7 @@ const port = 3030;
 
 app.use(express.static('public'));
 
-const defaultBoardSize = 16;
+const defaultBoardSize = 3;
 
 /**
  * @type {Object.<string, {
