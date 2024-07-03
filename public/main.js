@@ -572,26 +572,29 @@ function draw(time) {
         // @ts-ignore
         let playerTuples = Object.keys(players).map(playerid => [playerid, players[playerid].score]);
         playerTuples.sort((a, b) => b[1] - a[1]);
-        if(leaderBoard1){
-            leaderBoard1.getElementsByClassName("playerName")[0].innerHTML = playerTuples[0][0]
-            leaderBoard1.getElementsByClassName("playerScore")[0].innerHTML = playerTuples[0][1]
-        }
-        if(leaderBoard2){
-            leaderBoard2.getElementsByClassName("playerName")[0].innerHTML = playerTuples[1][0]
-            leaderBoard2.getElementsByClassName("playerScore")[0].innerHTML = playerTuples[1][1]
-        }
-        if(leaderBoard3){
-            leaderBoard3.getElementsByClassName("playerName")[0].innerHTML = playerTuples[2][0]
-            leaderBoard3.getElementsByClassName("playerScore")[0].innerHTML = playerTuples[2][1]
-        }
-        if(leaderBoard4){
-            leaderBoard4.getElementsByClassName("playerName")[0].innerHTML = playerTuples[3][0]
-            leaderBoard4.getElementsByClassName("playerScore")[0].innerHTML = playerTuples[3][1]
+
+        for(let i = 0; i < 4; i++) {
+            let leaderBoard1  = document.getElementById("playerScore"+(i+1))
+            if(i < Object.keys(players).length) {
+                if(leaderBoard1){
+                    leaderBoard1.style.display = "flex";
+                    // @ts-ignore
+                    leaderBoard1.getElementsByClassName("playerName")[0].innerHTML = players[playerTuples[i][0]].username;
+                    leaderBoard1.getElementsByClassName("playerScore")[0].innerHTML = playerTuples[i][1]
+                }
+            } else {
+                if(leaderBoard1){
+                    leaderBoard1.style.display = "none";
+                }
+            }
         }
 
         if (playerElem) {
             let i = Object.keys(lobbyState.players).findIndex(p => p === lobbyState?.winner);
-            playerElem.innerText = ballColourNames[i];
+            if(players[lobbyState.winner]){
+                // @ts-ignore
+                playerElem.innerText = players[lobbyState.winner].username;
+            }
         }
     } else {
         if (winElem) {
@@ -602,7 +605,7 @@ function draw(time) {
     let startElem = document.getElementById("startButton");
     if (startElem && player === null) {
         // @ts-ignore
-        if (lobbyState?.status === 'waiting' && lobbyState?.players.length>0) {
+        if (lobbyState?.status === 'waiting') {
             startElem.style.display = "flex";
         } else {
             startElem.style.display = "none";

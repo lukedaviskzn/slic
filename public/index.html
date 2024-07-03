@@ -21,9 +21,15 @@
             try {
                 let t = document.getElementById("lobby")?.value.toUpperCase().trim();
                 let name = document.getElementById("uname")?.value.toUpperCase().trim();
+
+
                 if (t.length != 6) {
                     throw "Lobby ID must be 6 letters";
                 }
+                if(name.length === 0) {
+                    throw "Player must have a username";
+                }
+                
                 let data = await fetch("/lobby/join?" + new URLSearchParams({ lobby: t, username: name }));
                 let json = await data.json();
                 if (json.error) {
@@ -40,8 +46,8 @@
     <h1 id="animated">SLIC</h1>
     <div class="panel">
         <button onclick="javascript:newLobby()">CREATE LOBBY</button>
-        <input type="text" name="lobby" id="lobby" placeholder="enter Lobby ID" maxlength="6">
-        <input type="text" name="uname" id="uname" placeholder="Enter Username" maxlength="12">
+        <input type="text" name="lobby" id="lobby" placeholder="enter Lobby ID" maxlength="6" minlength="6">
+        <input type="text" name="uname" id="uname" placeholder="Enter Username" maxlength="12" minlength="2">
         <button onclick="javascript:joinLobby()">JOIN LOBBY</button>
     </div>
 </body>
