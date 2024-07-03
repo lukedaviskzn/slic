@@ -9,7 +9,22 @@ app.use(express.static('public'));
 const defaultBoardSize = 16;
 
 /**
- * @type {Object.<string, {id: string, status: 'waiting' | 'playing' | 'finished', gravityAngle: number, winner: number, boardSize: number, walls: [{t: boolean, l: boolean}], players: [{gravityAngle: number, x: number, y: number, vx: number, vy: number}], powerUps: [{x: number, y: number, skill: '0g', holder: number, timeActivated: number}]}>}
+ * @type {Object.<string, {
+ *      id: string,
+ *      status: 'waiting' | 'playing' | 'finished',
+ *      gravityAngle: number,
+ *      winner: string,
+ *      boardSize: number,
+ *      walls: [{t: boolean, l: boolean}],
+ *      players: Object.<string, {
+ *          playerId: string,
+ *          gravityAngle: number,
+ *          x: number, y: number,
+ *          vx: number, vy: number,
+ *          lastPoll: number,
+ *      }>,
+ *      powerUps: [{x: number, y: number, skill: '0g', holder: string, timeActivated: number}]
+ * }>}
  */
 let lobbies = {};
 
@@ -25,10 +40,10 @@ app.get("/lobby/create", (req, res) => {
         id,
         status: 'waiting',
         gravityAngle: 0,
-        winner: -1,
+        winner: "",
         boardSize: defaultBoardSize,
         walls: generateMaze(defaultBoardSize),
-        players: [],
+        players: {},
         powerUps: [],
     };
 
@@ -38,7 +53,7 @@ app.get("/lobby/create", (req, res) => {
         lobby.walls[idx].t = false;
     }
 
-    for (let i = 0; i < lobby.boardSize * lobby.boardSize / 64; i++) {
+    for (let i = 0; i < lobby.boardSize * lobby.boardSize / 32; i++) {
         let x = Math.max(Math.min(Math.floor(Math.random() * lobby.boardSize), lobby.boardSize), 0);
         let y = Math.max(Math.min(Math.floor(Math.random() * lobby.boardSize), lobby.boardSize), 0);
 
@@ -51,7 +66,7 @@ app.get("/lobby/create", (req, res) => {
             x,
             y,
             skill: '0g',
-            holder: -1,
+            holder: "",
             timeActivated: -1,
         });
     }
@@ -65,19 +80,22 @@ app.get("/lobby/join", (req, res) => {
     let lobbyId = req.query.lobby;
     let lobby = lobbies[lobbyId];
     if (lobby === undefined) {
-        res.json({'error': "Lobby Doesn't Exist"});
-    } else if (lobby.players.length >= 4) {
-        res.json({'error': 'Lobby Full'});
+        res.json({'error': "Lobby doesn't exist."});
+    } else if (Object.keys(lobby.players).length >= 4) {
+        res.json({'error': 'Lobby full.'});
     } else {
-        lobby.players.push({
+        let playerId = Math.round(Math.random()*1.0e9)+"";
+        lobby.players[playerId] = {
+            playerId: playerId,
             gravityAngle: 0,
             x: 0,
             y: 0,
             vx: 0,
             vy: 0,
-        });
+            lastPoll: -1,
+        };
         res.json({
-            player: lobby.players.length-1,
+            player: playerId,
             lobby: lobby,
         });
     }
@@ -87,7 +105,7 @@ app.get("/lobby/start", (req, res) => {
     let lobbyId = req.query.lobby;
     let lobby = lobbies[lobbyId];
     if (lobby === undefined) {
-        res.json({'error': "Lobby Doesn't Exist"});
+        res.json({'error': "Lobby doesn't exist."});
     } else {
         lobby.status = 'playing';
         res.json({
@@ -100,9 +118,9 @@ app.get("/lobby/reset", (req, res) => {
     let lobbyId = req.query.lobby;
     let lobby = lobbies[lobbyId];
     if (lobby === undefined) {
-        res.json({'error': "Lobby Doesn't Exist"});
+        res.json({'error': "Lobby doesn't exist."});
     } else {
-        lobby.winner = -1;
+        lobby.winner = "";
         lobby.status = 'waiting';
         lobby.walls = generateMaze(lobby.boardSize);
 
@@ -112,7 +130,9 @@ app.get("/lobby/reset", (req, res) => {
             lobby.walls[idx].t = false;
         }
 
-        for (let i = 0; i < lobby.boardSize * lobby.boardSize / 64; i++) {
+        lobby.powerUps = [];
+
+        for (let i = 0; i < lobby.boardSize * lobby.boardSize / 32; i++) {
             let x = Math.max(Math.min(Math.floor(Math.random() * lobby.boardSize), lobby.boardSize), 0);
             let y = Math.max(Math.min(Math.floor(Math.random() * lobby.boardSize), lobby.boardSize), 0);
     
@@ -124,8 +144,8 @@ app.get("/lobby/reset", (req, res) => {
             lobby.powerUps.push({
                 x,
                 y,
-                skill: -1,
-                holder: -1,
+                skill: '0g',
+                holder: "",
                 timeActivated: -1,
             });
         }
@@ -139,15 +159,15 @@ app.get("/lobby/reset", (req, res) => {
 app.get("/lobby/powerup", (req, res) => {
     let lobbyId = req.query.lobby;
     let lobby = lobbies[lobbyId];
-    let playerId = parseInt(req.query.player);
+    let playerId = req.query.player;
     let px = parseInt(req.query.px);
     let py = parseInt(req.query.py);
     if (lobby === undefined) {
-        res.json({'error': "Lobby Doesn't Exist"});
+        res.json({'error': "Lobby doesn't exist."});
     } else {
         const p = lobby.powerUps.find(powerUp => powerUp.x == px && powerUp.y == py);
 
-        if (p && p.holder < 0) {
+        if (p && !p.holder) {
             p.holder = playerId;
             p.timeActivated = new Date().getTime();
         }
@@ -160,51 +180,58 @@ app.get("/lobby/powerup", (req, res) => {
 });
 
 app.get("/lobby/poll", (req, res) => {
-    let lobbyId = req.query.lobby;
-    let playerId = (() => {
-        let p = req.query.player;
-        if (p !== undefined) {
-            return parseInt(p);
-        } else {
-            return null;
-        }
-    })();
-    let gravity = playerId !== null ? parseFloat(req.query.gravity) : 0.0;
-    let bx = playerId !== null ? parseFloat(req.query.bx) : 0.0;
-    let by = playerId !== null ? parseFloat(req.query.by) : 0.0;
-    let vx = playerId !== null ? parseFloat(req.query.vx) : 0.0;
-    let vy = playerId !== null ? parseFloat(req.query.vy) : 0.0;
-    let win = req.query.win !== undefined;
+    const lobbyId = req.query.lobby;
+    const playerId = /** @type {string | undefined} */(req.query.player);
+    const gravity = playerId ? parseFloat(req.query.gravity) : 0.0;
+    const bx = playerId ? parseFloat(req.query.bx) : 0.0;
+    const by = playerId ? parseFloat(req.query.by) : 0.0;
+    const vx = playerId ? parseFloat(req.query.vx) : 0.0;
+    const vy = playerId ? parseFloat(req.query.vy) : 0.0;
+    const win = req.query.win !== undefined;
     
     let lobby = lobbies[lobbyId];
     
     if (lobby === undefined) {
-        res.json({'error': "Lobby Doesn't Exist"});
+        res.json({'error': "Lobby doesn't exist."});
         return;
     }
 
-    if (playerId !== null) {
+    if (playerId && !(playerId in lobby.players)) {
+        res.json({'error': "Player not in game."});
+        return;
+    }
+
+    const time = new Date().getTime();
+
+    if (playerId) {
         lobby.players[playerId].gravityAngle = gravity;
         lobby.players[playerId].x = bx;
         lobby.players[playerId].y = by;
         lobby.players[playerId].vx = vx;
         lobby.players[playerId].vy = vy;
+        lobby.players[playerId].lastPoll = time;
 
-        if (lobby.status === 'playing' && win && lobby.winner == -1) {
+        if (lobby.status === 'playing' && win && !lobby.winner) {
             lobby.winner = playerId;
             lobby.status = 'finished';
         }
     
         let averageGravity = 0.0;
-        lobby.players.forEach(player => {
-            averageGravity += player.gravityAngle;
+        const keys = Object.keys(lobby.players);
+        keys.forEach(p => {
+            averageGravity += lobby.players[p].gravityAngle;
         });
-        averageGravity /= lobby.players.length || 1;
+        averageGravity /= keys.length || 1;
     
         lobby.gravityAngle = lobby.gravityAngle * 4 / 5.0 + averageGravity / 5.0;
     }
 
-    lobby.powerUps = lobby.powerUps.filter(powerUp => powerUp.timeActivated < 0 || powerUp.timeActivated + 15000 >= new Date().getTime());
+    lobby.powerUps = lobby.powerUps.filter(powerUp => powerUp.timeActivated < 0 || powerUp.timeActivated + 15000 >= time);
+
+    let playerRemove = Object.values(lobby.players).filter(player => player.lastPoll >= 0 && player.lastPoll + 10000 < time);
+    playerRemove.forEach(p => {
+        delete lobby.players[p.playerId];
+    });
 
     res.json({
         timestamp: new Date().getTime(),

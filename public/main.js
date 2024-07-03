@@ -144,14 +144,7 @@ class Sphere {
 
 const urlParams = new URLSearchParams(window.location.search);
 const lobbyId = urlParams.get('lobby') ?? "";
-const player = (() => {
-    let p = urlParams.get('player');
-    if (p) {
-        return parseInt(p);
-    } else {
-        return null;
-    }
-})();
+const player = urlParams.get('player');
 
 const wallHeight = 1.0;
 
@@ -165,6 +158,9 @@ const ballColours = [
 const ballColourNames = [
 "RED","YELLOW","GREEN","BLUE"
 ];
+
+const clock0gWrapper = document.getElementById("0g-clock-wrapper");
+const clock0g = document.getElementById("0g-clock");
 
 /**@type {HTMLCanvasElement | null | undefined}*/
 let canvas;
@@ -369,7 +365,7 @@ function compileProgram(gl) {
         } else if (render_mode == 2) {
             final = vec4(colour * (v_pos.y + 10.0) / 10.5, 1.0);
         } else if (render_mode == 3) {
-            final = vec4(hsvToRgb((sin(time/500.0)+1.0)*180.0, 1.0, 0.9), 1.0);
+            final = vec4(hsvToRgb((sin(time/500.0)+1.0)*20.0, 1.0, 0.9), 1.0);
         }
         gl_FragColor = final;
     }
@@ -415,7 +411,22 @@ let dt = 0;
 
 let currentFrame = 0;
 
-/** @type {undefined | {id: string, status: 'waiting' | 'playing' | 'finished', gravityAngle: number, winner: number, boardSize: number, walls: [{t: boolean, l: boolean}], players: [{gravityAngle: number, x: number, y: number, vx: number, vy: number}], powerUps: [{x: number, y: number, skill: '0g', holder: number, timeActivated: number}]}} */
+/** @type {undefined | {
+ *      id: string,
+ *      status: 'waiting' | 'playing' | 'finished',
+ *      gravityAngle: number,
+ *      winner: string,
+ *      boardSize: number,
+ *      walls: [{t: boolean, l: boolean}],
+ *      players: Object.<string, {
+ *          playerId: string,
+ *          gravityAngle: number,
+ *          x: number, y: number,
+ *          vx: number, vy: number,
+ *          lastPoll: number,
+ *      }>,
+ *      powerUps: [{x: number, y: number, skill: '0g', holder: string, timeActivated: number}]
+ * }} */
 let lobbyState;
 let latestLobbyTime = 0;
 
@@ -470,25 +481,13 @@ function main() {
         throw "Doesn't support device orientation.";
     }
 
-    if (player !== null) {
+    if (player) {
         ball = new Sphere(new Vec2(-0.05, 0.4), 0.025);
     }
 
     let lobbyElem = document.getElementById("lobby");
     if (lobbyElem) {
         lobbyElem.innerText = lobbyId+"";
-    }
-
-    let colourElem = document.getElementById("col");
-    if (colourElem && player !== null) {
-        const colour = ballColours[player];
-        colourElem.style.color = "rgb("+colour[0]+", "+colour[1]+", "+colour[2]+")";
-        colourElem.innerText = ballColourNames[player];
-
-        let colourDiv = document.getElementById("playerColour");
-        if (colourDiv) {
-            colourDiv.style.display = "block";
-        }
     }
 
     poll();
@@ -513,6 +512,11 @@ function drawObject(gl, r, g, b, renderMode, model) {
     gl.drawArrays(gl.TRIANGLES, 0, 6);
 }
 
+
+let lobbyElem = document.getElementById("lobby");
+let colourElem = document.getElementById("col");
+let winElem = document.getElementById("winScreen");
+
 /**
  * @param {DOMHighResTimeStamp} time
  */
@@ -522,7 +526,6 @@ function draw(time) {
     dt = Math.min((time - lastTime) / 1000.0, 1/30.0);
     lastTime = time;
     
-    let lobbyElem = document.getElementById("lobby");
 
     if (!canvas || !gl || !vertexBuffer || !program) {
         return;
@@ -535,12 +538,23 @@ function draw(time) {
     if (currentFrame % 5 == 0) {
         poll();
     }
-    
-    let winElem = document.getElementById("winScreen");
 
-    if (player !== null && ball && lobbyState.status == "waiting") {
+    if (colourElem && player && lobbyState) {
+        let i = Object.keys(lobbyState.players).findIndex(p => p == player);
+        const colour = ballColours[i];
+        colourElem.style.color = "rgb("+colour[0]+", "+colour[1]+", "+colour[2]+")";
+        colourElem.innerText = ballColourNames[i];
+
+        let colourDiv = document.getElementById("playerColour");
+        if (colourDiv) {
+            colourDiv.style.display = "block";
+        }
+    }
+
+    if (player && ball && lobbyState.status == "waiting") {
+        let index = Object.keys(lobbyState.players).findIndex(p => p === player);
         ball.centre.y = 0.5 - 0.5 / lobbyState.boardSize;
-        ball.centre.x = Math.round((player + 1) / (lobbyState.players.length + 1) * lobbyState.boardSize) / lobbyState.boardSize - 0.5 - 0.5 / lobbyState.boardSize;
+        ball.centre.x = Math.round((index + 1) / (Object.keys(lobbyState.players).length + 1) * lobbyState.boardSize) / lobbyState.boardSize - 0.5 - 0.5 / lobbyState.boardSize;
     }
     if (lobbyState.status == "finished") {
         if (winElem) {
@@ -602,7 +616,7 @@ function draw(time) {
 
     rot = rot*4/5 + lobbyState.gravityAngle/5;
 
-    const boardRot = rotZ(player !== null ? (rot / 10.0) : rot);
+    const boardRot = rotZ(player ? (rot / 10.0) : rot);
 
     const board = matMul(translate(0, 0, -1.5), boardRot);
 
@@ -638,11 +652,25 @@ function draw(time) {
         }
     }
 
+    let zeroGs = lobbyState.powerUps.filter(powerUp => powerUp.holder === player && powerUp.skill === '0g');
+    if (!zeroGs.length && clock0gWrapper) {
+        clock0gWrapper.style.display = "none";
+    }
+    zeroGs.sort((a,b) => a.timeActivated - b.timeActivated);
+    for (let i = 0; i < zeroGs.length; i++) {
+        if (clock0gWrapper && clock0g) {
+            let angle = (new Date().getTime() - zeroGs[i].timeActivated) / 15000 * 360;
+            
+            clock0gWrapper.style.display = "flex";
+            clock0g.style.background = `conic-gradient(transparent 0deg ${angle}deg, white ${angle}deg 360deg)`;
+        }
+    }
+
     for (let i = 0; i < lobbyState.powerUps.length; i++) {
         const powerUp = lobbyState.powerUps[i];
 
-        if (powerUp.holder !== -1) {
-            break;
+        if (powerUp.holder) {
+            continue;
         }
 
         const px = -0.5 + 0.5/size + powerUp.x/size;
@@ -652,7 +680,7 @@ function draw(time) {
 
         drawObject(gl, 1.0, 0.5, 0.5, 3, matMul(board, model));
 
-        if (player !== null && ball) {
+        if (player && ball) {
             let aabb = new AABB(new Vec2(px - 0.3/size, py - 0.3/size), new Vec2(px + 0.3/size, py + 0.3/size));
             if (aabb.collideSphere(ball)) {
                 fetch("/lobby/powerup?" + new URLSearchParams({ lobby: lobbyId, player: player+"", px: powerUp.x+"", py: powerUp.y+"" })).then(data => {
@@ -698,12 +726,14 @@ function draw(time) {
         }
     }
 
-    for (let i = 0; i < lobbyState.players.length; i++) {
-        const p = lobbyState.players[i];
+    let keys = Object.keys(lobbyState.players);
+
+    for (let i = 0; i < keys.length; i++) {
+        const p = lobbyState.players[keys[i]];
 
         let br = 0.25 / lobbyState.boardSize;
-        let bx = (player === i && ball) ? ball.centre.x : p.x;
-        let by = (player === i && ball) ? ball.centre.y : p.y;
+        let bx = (player === keys[i] && ball) ? ball.centre.x : p.x;
+        let by = (player === keys[i] && ball) ? ball.centre.y : p.y;
 
         const ballModel = matMul(translate(0,0,-1.5), matMul(boardRot, matMul(translate(bx, by, 0.05), scale(br*2))));
 
@@ -799,7 +829,7 @@ function runCollisions(dt, until=undefined) {
 
 function poll() {
     let params = { lobby: lobbyId };
-    if (player !== null && ball) {
+    if (player && ball) {
         params.player = player;
         params.bx = ball.centre.x+"";
         params.by = ball.centre.y+"";
