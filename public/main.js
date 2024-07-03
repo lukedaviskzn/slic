@@ -534,6 +534,9 @@ function draw(time) {
         let leaderBoard4 = document.getElementById("leaderboardEntry4");
 
         // @ts-ignore
+        console.log(lobbyState.scores); 
+
+        // @ts-ignore
         let scores = lobbyState.scores;
         // Create an array of indices
         let indices = scores.map((_, index) => index);
@@ -552,9 +555,9 @@ function draw(time) {
             // @ts-ignore
             leaderBoard3.innerText = lobbyState.usernames[indices[2]] + ":" + scores[indices[2]]
         }
-        if (leaderBoard1) {
+        if (leaderBoard4) {
             // @ts-ignore
-            leaderBoard1.innerText = lobbyState.usernames[indices[3]] + ":" +  scores[indices[3]]
+            leaderBoard4.innerText = lobbyState.usernames[indices[3]] + ":" +  scores[indices[3]]
         }
 
     } else {

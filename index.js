@@ -6,7 +6,7 @@ const port = 3030;
 
 app.use(express.static('public'));
 
-const defaultBoardSize = 16;
+const defaultBoardSize = 4;//16
 
 /**
  * @type {Object.<string, {id: string, status: 'waiting' | 'playing' | 'finished', gravityAngle: number, winner: number, boardSize: number, walls: [{t: boolean, l: boolean}], players: [{gravityAngle: number, x: number, y: number, vx: number, vy: number}]}>}
@@ -30,7 +30,7 @@ app.get("/lobby/create", (req, res) => {
         walls: generateMaze(defaultBoardSize),
         players: [],
         usernames: [],
-        scores: [],
+        scores: [0,0,0,0],
     };
 
     for (let i = 0; i < lobby.boardSize / 4; i++) {
@@ -44,13 +44,6 @@ app.get("/lobby/create", (req, res) => {
     res.json(lobby);
 });
 
-app.get("/leaderboard/incrementScore", (req, res) => {
-    let lobbyId = req.query.lobby;
-    let lobby = lobbies[lobbyId];
-    let playerId = lobby.winner;
-    lobby.scores[parseInt(playerId)] = lobby.scores[parseInt(playerId)] + 1;
-    console.log(lobby.scores);
-});
 
 app.get("/lobby/join", (req, res) => {
     let lobbyId = req.query.lobby;
