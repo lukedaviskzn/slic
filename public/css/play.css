@@ -16,17 +16,18 @@ html, body {
 }
 
 #lobby {
-    color: rgb(44, 175, 44);
+    color: rgb(255, 255, 255);
 }
 
 
 #lobbyPanel {
-    height: 60px;
+    height: 50px;
     top: 0; left: 0; right: 0;
     z-index: 10;
     bottom: auto;
     position: absolute;
-    background-color: white;
+    background-color: rgb(44, 39, 51);
+    color:rgb(194, 190, 206);
     display: flex;
     justify-content: space-between;
     padding-left: 1rem;
