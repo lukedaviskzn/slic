@@ -504,6 +504,10 @@ function main() {
 
     poll();
 
+    if ('wakeLock' in navigator) {
+        navigator.wakeLock.request();
+    }
+
     requestAnimationFrame(draw);
 }
 
