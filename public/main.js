@@ -473,8 +473,9 @@ function main() {
             }
 
             targetRot = targetRot*2/3 + (angle - Math.PI/2)/3;
-            // targetRot = angle - Math.PI/2;
 
+            acc.x = -b.x * Math.cos(rot - targetRot) + b.y * Math.sin(rot - targetRot);
+            acc.y = -b.x * Math.sin(rot - targetRot) - b.y * Math.cos(rot - targetRot);
             acc.x = -b.x * Math.cos(rot - targetRot) + b.y * Math.sin(rot - targetRot);
             acc.y = -b.x * Math.sin(rot - targetRot) - b.y * Math.cos(rot - targetRot);
         }, false);
@@ -649,6 +650,7 @@ function draw(time) {
 
     rot = rot*4/5 + lobbyState.gravityAngle/5;
 
+    const boardRot = rotZ(player ? (rot - targetRot) : rot);
     const boardRot = rotZ(player ? (rot - targetRot) : rot);
 
     const board = matMul(translate(0, 0, -1.5), boardRot);
