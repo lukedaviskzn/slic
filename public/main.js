@@ -438,7 +438,7 @@ let lobbyState;
  */
 let playerPositions = {};
 let latestLobbyTime = 0;
-
+let gameWon = false;
 function main() {
     canvas = /**@type {HTMLCanvasElement | null}*/(document.getElementById("canvas"));
     gl = canvas?.getContext("webgl");
@@ -568,10 +568,12 @@ function draw(time) {
     }
 
     if (player && ball && lobbyState.status == "waiting") {
+        gameWon = false;
         let index = Object.keys(lobbyState.players).findIndex(p => p === player);
         ball.centre.y = 0.5 - 0.5 / lobbyState.boardSize;
         ball.centre.x = Math.round((index + 1) / (Object.keys(lobbyState.players).length + 1) * lobbyState.boardSize) / lobbyState.boardSize - 0.5 - 0.5 / lobbyState.boardSize;
     }
+<<<<<<< HEAD
     if (lobbyState.status === 'finished') {
         if (winElem && lastStatus !== 'finished') {
             winElem.style.display = "flex";
@@ -603,6 +605,25 @@ function draw(time) {
             if (playerElem) {
                 let i = Object.keys(lobbyState.players).findIndex(p => p === lobbyState?.winner);
                 if(players[lobbyState.winner]){
+=======
+    if (lobbyState.status == "finished" && !gameWon) {
+        gameWon = true;
+        if (winElem) {
+            winElem.style.display = "flex";
+        }
+        let playerElem = document.getElementById("winPlayer");
+
+        let players = lobbyState.players;
+        // @ts-ignore
+        let playerTuples = Object.keys(players).map(playerid => [playerid, players[playerid].score]);
+        playerTuples.sort((a, b) => b[1] - a[1]);
+
+        for(let i = 0; i < 4; i++) {
+            let leaderBoard1  = document.getElementById("playerScore"+(i+1))
+            if(i < Object.keys(players).length) {
+                if(leaderBoard1){
+                    leaderBoard1.style.display = "flex";
+>>>>>>> master
                     // @ts-ignore
                     playerElem.innerText = players[lobbyState.winner].username;
                 }
