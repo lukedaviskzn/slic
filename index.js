@@ -236,7 +236,7 @@ app.get("/lobby/poll", (req, res) => {
         lobby.gravityAngle = lobby.gravityAngle * 4 / 5.0 + averageGravity / 5.0;
     }
 
-    lobby.powerUps = lobby.powerUps.filter(powerUp => powerUp.timeActivated < 0 || powerUp.timeActivated + 15000 >= time);
+    lobby.powerUps = lobby.powerUps.filter(powerUp => powerUp.timeActivated < 0 || powerUp.timeActivated + 7500 >= time);
 
     let playerRemove = Object.values(lobby.players).filter(player => player.lastPoll >= 0 && player.lastPoll + 10000 < time);
     playerRemove.forEach(p => {

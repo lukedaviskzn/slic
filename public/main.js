@@ -706,7 +706,7 @@ function draw(time) {
     zeroGs.sort((a,b) => a.timeActivated - b.timeActivated);
     for (let i = 0; i < zeroGs.length; i++) {
         if (clock0gWrapper && clock0g) {
-            let angle = (new Date().getTime() - zeroGs[i].timeActivated) / 15000 * 360;
+            let angle = (new Date().getTime() - zeroGs[i].timeActivated) / 7500 * 360;
             
             clock0gWrapper.style.display = "flex";
             clock0g.style.background = `conic-gradient(transparent 0deg ${angle}deg, white ${angle}deg 360deg)`;
