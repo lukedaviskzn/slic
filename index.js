@@ -92,7 +92,7 @@ app.get("/lobby/join", (req, res) => {
             y: 0,
             vx: 0,
             vy: 0,
-            lastPoll: -1,
+            lastPoll: new Date().getTime() + 10000,
         };
         res.json({
             player: playerId,

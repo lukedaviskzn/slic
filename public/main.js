@@ -562,7 +562,8 @@ function draw(time) {
         }
         let playerElem = document.getElementById("winPlayer");
         if (playerElem) {
-            playerElem.innerText = ballColourNames[lobbyState.winner];
+            let i = Object.keys(lobbyState.players).findIndex(p => p === lobbyState?.winner);
+            playerElem.innerText = ballColourNames[i];
         }
     } else {
         if (winElem) {
