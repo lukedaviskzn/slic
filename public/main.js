@@ -616,7 +616,7 @@ function draw(time) {
 
     let resetElem = document.getElementById("resetButton");
     if (resetElem && player === null) {
-        if (lobbyState?.status === 'finished') {
+        if (lobbyState?.status === 'finished' || lobbyState?.status === 'playing') {
             resetElem.style.display = "flex";
         } else {
             resetElem.style.display = "none";
