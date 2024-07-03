@@ -98,26 +98,51 @@ button:hover {
     align-items: center;
 }
 
-.panel {
-    flex-shrink: 0;
-    margin-left: auto;
-    margin-right: auto;
-    border-radius: 0.5rem;
-    padding: 3rem;
-    background-color: white;
-    color: black;
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    flex-direction: column;
-    row-gap: 1rem;
+.font-whacky {
     font-family: "agent_redregular", sans-serif;
     text-align: center;
-    font-size: 4rem;
+    font-size: 3rem;
+    margin-bottom: 2rem;
 }
 
-#winScreen {
-    display: none;
+#winScreen{
+    position: absolute;
+    top: 60px;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-color: white;
+    display: flex;
+    flex-direction: column;
+    padding: 0.5rem;
+    text-align: center;
+}
+
+#playerScores{
+    display: flex;
+    flex-direction: column;
+    row-gap: 1rem;
+    width: 50%;
+    margin-left: auto;
+    margin-right: auto;
+}
+
+.playerScore{
+    display: flex;
+    background-color: rgb(240, 240, 240);
+    padding: 0.6rem;
+    border-radius: 5px;
+    justify-content: space-between;
+    align-items: center;
+    font-weight: bold;
+    font-size: large;
+    /* div{
+        height: min-content;
+    } */
+}   
+
+#waitingText {
+    margin-top: 2rem;
 }
 
 #clockPanel {
