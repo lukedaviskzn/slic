@@ -430,6 +430,13 @@ let currentFrame = 0;
  *      powerUps: [{x: number, y: number, skill: '0g', holder: string, timeActivated: number}]
  * }} */
 let lobbyState;
+/**
+ * @type {Object.<string, {
+ *     playerId: string,
+*      x: number, y: number,
+*  }>}
+ */
+let playerPositions = {};
 let latestLobbyTime = 0;
 
 function main() {
@@ -771,9 +778,20 @@ function draw(time) {
     for (let i = 0; i < keys.length; i++) {
         const p = lobbyState.players[keys[i]];
 
+        if (!(p.playerId in playerPositions)) {
+            playerPositions[p.playerId] = {
+                playerId: p.playerId,
+                x: p.x,
+                y: p.y,
+            };
+        }
+
+        playerPositions[p.playerId].x = playerPositions[p.playerId].x*3/4 + p.x/4;
+        playerPositions[p.playerId].y = playerPositions[p.playerId].y*3/4 + p.y/4;
+
         let br = 0.25 / lobbyState.boardSize;
-        let bx = (player === keys[i] && ball) ? ball.centre.x : p.x;
-        let by = (player === keys[i] && ball) ? ball.centre.y : p.y;
+        let bx = (player === keys[i] && ball) ? ball.centre.x : playerPositions[p.playerId].x;
+        let by = (player === keys[i] && ball) ? ball.centre.y : playerPositions[p.playerId].y;
 
         const ballModel = matMul(translate(0,0,-1.5), matMul(boardRot, matMul(translate(bx, by, 0.05), scale(br*2))));
 
@@ -781,12 +799,12 @@ function draw(time) {
         const colour = ballColours[i];
         drawObject(gl, colour[0]/255, colour[1]/255, colour[2]/255, 1, ballModel);
 
-        if (lobbyState.status === 'playing') {
-            p.x += p.vx * dt;
-            p.y += p.vy * dt;
-            p.vx *= 0.8;
-            p.vy *= 0.8;
-        }
+        // if (lobbyState.status === 'playing') {
+        //     p.x += p.vx * dt;
+        //     p.y += p.vy * dt;
+        //     p.vx *= 0.8;
+        //     p.vy *= 0.8;
+        // }
     }
 
     lastStatus = lobbyState.status;
